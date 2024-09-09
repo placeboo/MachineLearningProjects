@@ -1,0 +1,9 @@
+# pycharm files
+.idea/
+*.iml
+*.iws
+*.xml
+
+# data
+data/
+
