@@ -6,4 +6,10 @@
 
 # data
 data/
+*.joblib
+*.pkl
+*.csv
+*.json
 
+# figures
+figures/
