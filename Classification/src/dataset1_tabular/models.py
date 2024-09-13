@@ -20,7 +20,7 @@ class KNNModel:
         self.best_params = None
 
     def train(self):
-        grid_search = GridSearchCV(self.model, param_grid=self.param_grid, cv=self.cv, n_jobs=-1, return_train_score=True, verbose=1)
+        grid_search = GridSearchCV(self.model, param_grid=self.param_grid, cv=self.cv, n_jobs=-1, return_train_score=True, verbose=2)
 
         grid_search.fit(self.X_train, self.y_train)
 
