@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import joblib
 import os
 import json
+
+import pandas as pd
 from sklearn.model_selection import learning_curve
 import pickle
 
@@ -64,22 +66,29 @@ def save_metrics(metrics, save_dir, model_name, dataset_name):
         json.dump(metrics, f)
     print(f'Metrics saved successfully at {metrics_file_path}')
 
+def load_metrics(load_dir, model_name, dataset_name):
+    metrics_file_path = f'{load_dir}/{model_name}_{dataset_name}_metrics.json'
+    with open(metrics_file_path, 'r') as f:
+        metrics = json.load(f)
+    print(f'Metrics loaded successfully from {metrics_file_path}')
+    return metrics
 ############################################
 #  Plots and Visualizations
 ############################################
 def plot_leanring_curve(model, X, y, cv, train_size=np.linspace(0.1, 1.0, 5)):
     """
-    plot the learning curve: error vs training size
+    plot the learning curve: error vs training size and fit time vs training size
     :param model: the best model from GridSearchCV
     :param X: the X_train
     :param y: the y_train
     :param cv: the k-fold
     :param train_size: relative training size
     """
-    train_sizes, train_scores, val_scores = learning_curve(model, X, y, train_sizes=train_size, cv=cv, n_jobs=-1, random_state=17, verbose=2)
+    train_sizes, train_scores, val_scores, fit_times, _ = learning_curve(model, X, y, train_sizes=train_size, cv=cv, n_jobs=-1, random_state=17, verbose=2)
 
     train_error_mean = 1 - np.mean(train_scores, axis=1)
     val_error_mean = 1 - np.mean(val_scores, axis=1)
+    fit_times = np.mean(fit_times, axis=1)
 
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.plot(train_sizes, train_error_mean, label='Training error', color='r', linestyle='--', marker='o')
@@ -88,5 +97,61 @@ def plot_leanring_curve(model, X, y, cv, train_size=np.linspace(0.1, 1.0, 5)):
     ax.set_ylabel('Error')
     ax.set_title('Learning Curve')
     ax.legend()
-    return fig
 
+    # plot the fit time
+    fig2, ax2 = plt.subplots(figsize=(10, 6))
+    ax2.plot(train_sizes, fit_times, label='Fit time', color='g', linestyle='--', marker='o')
+    ax2.set_xlabel('Training size')
+    ax2.set_ylabel('Fit time')
+    ax2.set_title('Fit Time')
+    ax2.legend()
+
+    return fig, fig2
+
+def format_cv_results(cv_results):
+    """
+    :param cv_results: the cv_results from GridSearchCV
+    :return: a pandas DataFrame
+    """
+    params = cv_results['params']
+    mean_fit_time = cv_results['mean_fit_time']
+    std_fit_time = cv_results['std_fit_time']
+    mean_score_time = cv_results['mean_score_time']
+    std_score_time = cv_results['std_score_time']
+    mean_test_score = cv_results['mean_test_score']
+    std_test_score = cv_results['std_test_score']
+    mean_train_score = cv_results['mean_train_score']
+    std_train_score = cv_results['std_train_score']
+
+    results = pd.DataFrame(params)
+    results['mean_fit_time'] = mean_fit_time
+    results['std_fit_time'] = std_fit_time
+    results['mean_score_time'] = mean_score_time
+    results['std_score_time'] = std_score_time
+    results['mean_test_score'] = mean_test_score
+    results['std_test_score'] = std_test_score
+    results['mean_train_score'] = mean_train_score
+    results['std_train_score'] = std_train_score
+    results['mean_train_error'] = 1 - results['mean_train_score']
+    results['mean_test_error'] = 1 - results['mean_test_score']
+
+    return results
+
+
+def plot_complexity_curve(df, x_axis, title):
+    """
+    plot the complexity curve: error vs complexity parameter
+    :param title:
+    :param df: the dataframe containing the cv_results
+    :param x_axis: the complexity parameter
+    :param group: if none, no 
+    :return:
+    """
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(df[x_axis], df['mean_train_error'], label='Training error', linestyle='--', marker='o', color='r')
+    ax.plot(df[x_axis], df['mean_test_error'], label='Validation error', linestyle='-', marker='o', color='b')
+    plt.xlabel(x_axis)
+    plt.ylabel('Error')
+    plt.title(title)
+    plt.legend()
+    return plt
