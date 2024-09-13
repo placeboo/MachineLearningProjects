@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import joblib
 import os
 import json
+import time
 
 import pandas as pd
 from sklearn.model_selection import learning_curve
@@ -72,6 +73,20 @@ def load_metrics(load_dir, model_name, dataset_name):
         metrics = json.load(f)
     print(f'Metrics loaded successfully from {metrics_file_path}')
     return metrics
+
+def measure_time(fnc):
+    """
+    Decorator to measure the time of a function
+    :param fnc: the function to measure
+    :return: the wrapper function
+    """
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = fnc(*args, **kwargs)
+        end = time.time()
+        print(f'{fnc.__name__} took {end - start} seconds')
+        return result
+    return wrapper
 ############################################
 #  Plots and Visualizations
 ############################################
@@ -84,7 +99,7 @@ def plot_leanring_curve(model, X, y, cv, train_size=np.linspace(0.1, 1.0, 5)):
     :param cv: the k-fold
     :param train_size: relative training size
     """
-    train_sizes, train_scores, val_scores, fit_times, _ = learning_curve(model, X, y, train_sizes=train_size, cv=cv, n_jobs=-1, random_state=17, verbose=2)
+    train_sizes, train_scores, val_scores, fit_times, _ = learning_curve(model, X, y, train_sizes=train_size, cv=cv, n_jobs=-1, random_state=17, verbose=2, return_times=True)
 
     train_error_mean = 1 - np.mean(train_scores, axis=1)
     val_error_mean = 1 - np.mean(val_scores, axis=1)
