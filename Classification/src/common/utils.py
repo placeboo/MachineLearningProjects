@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 import joblib
 import os
 import json
@@ -90,6 +91,32 @@ def measure_time(fnc):
 ############################################
 #  Plots and Visualizations
 ############################################
+def set_global_plot_style(style='seaborn-whitegrid', tick_size=10, label_size=12, title_size=14, legend_size=10, figsize=(10, 6)):
+    plt.style.use(style)
+    sns.set_style('whitegrid')
+
+    # set the font size
+    plt.rc('font', size=tick_size)          # controls default text sizes
+    plt.rc('axes', titlesize=title_size)     # fontsize of the axes title
+    plt.rc('axes', labelsize=label_size)    # fontsize of the x and y labels
+    plt.rc('xtick', labelsize=tick_size)    # fontsize of the tick labels
+    plt.rc('ytick', labelsize=tick_size)    # fontsize of the tick labels
+    plt.rc('legend', fontsize=legend_size)  # legend fontsize
+    plt.rc('figure', titlesize=title_size)  # font size of the figure title
+    # set default figure size
+    plt.rc('figure', figsize=figsize)
+    # increase the linewidth of the axes
+    plt.rc('axes', linewidth=1.5)
+    # set color cycle
+    plt.rc('axes', prop_cycle=plt.cycler('color',
+                                         ['#E24A33', '#348ABD', '#988ED5', '#777777', '#FBC15E', '#8EBA42', '#FFB5B8']))
+    # set the background color
+    plt.rc('figure', facecolor='white')
+
+    print('Global plot style set successfully!')
+
+
+
 def plot_leanring_curve(model, X, y, cv, train_size=np.linspace(0.1, 1.0, 5)):
     """
     plot the learning curve: error vs training size and fit time vs training size
@@ -105,7 +132,7 @@ def plot_leanring_curve(model, X, y, cv, train_size=np.linspace(0.1, 1.0, 5)):
     val_error_mean = 1 - np.mean(val_scores, axis=1)
     fit_times = np.mean(fit_times, axis=1)
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=None)
     ax.plot(train_sizes, train_error_mean, label='Training error', color='r', linestyle='--', marker='o')
     ax.plot(train_sizes, val_error_mean, label='Validation error', color='b', linestyle='-', marker='o')
     ax.set_xlabel('Training size')
@@ -114,7 +141,7 @@ def plot_leanring_curve(model, X, y, cv, train_size=np.linspace(0.1, 1.0, 5)):
     ax.legend()
 
     # plot the fit time
-    fig2, ax2 = plt.subplots(figsize=(10, 6))
+    fig2, ax2 = plt.subplots(figsize=None)
     ax2.plot(train_sizes, fit_times, label='Fit time', color='g', linestyle='--', marker='o')
     ax2.set_xlabel('Training size')
     ax2.set_ylabel('Fit time')
@@ -162,9 +189,21 @@ def plot_complexity_curve(df, x_axis, title):
     :param group: if none, no 
     :return:
     """
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.plot(df[x_axis], df['mean_train_error'], label='Training error', linestyle='--', marker='o', color='r')
-    ax.plot(df[x_axis], df['mean_test_error'], label='Validation error', linestyle='-', marker='o', color='b')
+    fig, ax = plt.subplots(figsize=None)
+
+    if df[x_axis].dtype == 'object' or df[x_axis].dtype == 'str':
+        # bar plot of the categorical variable
+        x = np.arange(len(df[x_axis]))
+        width = 0.35
+
+        ax.bar(x - width/2, df['mean_train_error'], width, label='Training error', color='r', alpha=0.5)
+        ax.bar(x + width/2, df['mean_test_error'], width, label='Validation error', color='b', alpha=0.5)
+        ax.set_xticks(x)
+        ax.set_xticklabels(df[x_axis], rotation=45, ha='right')
+    else:
+        ax.plot(df[x_axis], df['mean_train_error'], label='Training error', linestyle='--', marker='o', color='r')
+        ax.plot(df[x_axis], df['mean_test_error'], label='Validation error', linestyle='-', marker='o', color='b')
+
     plt.xlabel(x_axis)
     plt.ylabel('Error')
     plt.title(title)
