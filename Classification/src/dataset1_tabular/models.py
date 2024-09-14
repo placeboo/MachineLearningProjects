@@ -70,3 +70,5 @@ class SVMModel:
         y_pred = self.best_model.predict(self.X_test)
         evaluation_metrics = evaluate_model(self.y_test, y_pred)
         return evaluation_metrics
+
+
