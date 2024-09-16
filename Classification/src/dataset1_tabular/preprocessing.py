@@ -90,7 +90,7 @@ def create_preprocessing_pipeline(num_features, cat_features):
     return preprocessor
 
 
-def preprocess_data(df, target_column, num_features, cat_features):
+def preprocess_data(df, target_column, num_features, cat_features, random_state=17):
 
     df = convert_target(df, target_column)
 
@@ -102,7 +102,7 @@ def preprocess_data(df, target_column, num_features, cat_features):
     # data split
     X = df.drop(target_column, axis=1)
     y = df[target_column]
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=17)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_state)
 
     X_train_processed = preprocessor.fit_transform(X_train)
     X_test_processed = preprocessor.transform(X_test)
@@ -124,22 +124,5 @@ def save_processed_data(X_train, X_test, y_train, y_test, preprocessor, output_d
     print('Data saved successfully!')
 
 
-
-def main(file_path, output_dir):
-    df = load_csv(file_path)
-    X_train, X_test, y_train, y_test, preprocessor = preprocess_data(df, TARGET_COLUMN, NUM_FEATURES, CAT_FEATURES)
-
-    print(f"X_train shape: {X_train.shape}")
-    print(f"X_test shape: {X_test.shape}")
-
-    # save
-    save_processed_data(X_train, X_test, y_train, y_test, preprocessor, output_dir)
-    return X_train, X_test, y_train, y_test, preprocessor
-
-if __name__ == '__main__':
-    file_path = '../../data/dataset1/raw/Bank_Campaign.csv'
-    output_dir = '../../data/dataset1/processed'
-
-    main(file_path, output_dir)
 
 

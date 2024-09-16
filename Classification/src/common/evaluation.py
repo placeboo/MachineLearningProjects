@@ -20,14 +20,13 @@ def evaluate_model(y_true, y_pred):
     print(f'Recall: {recall:.3f}')
     print(f'f1-score: {f1:.3f}')
 
-
-    cm = confusion_matrix(y_true, y_pred)
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-    plt.xlabel('Predicted labels')
-    plt.ylabel('True labels')
-    plt.title('Confusion Matrix')
-    plt.show()
+    # cm = confusion_matrix(y_true, y_pred)
+    # plt.figure(figsize=(10, 8))
+    # sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+    # plt.xlabel('Predicted labels')
+    # plt.ylabel('True labels')
+    # plt.title('Confusion Matrix')
+    # plt.show()
 
     return {
         'accuracy': accuracy,

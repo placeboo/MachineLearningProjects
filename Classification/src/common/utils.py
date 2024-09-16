@@ -8,6 +8,7 @@ import time
 
 import pandas as pd
 from sklearn.model_selection import learning_curve
+from sklearn.metrics import roc_curve, auc
 import pickle
 
 # save the model
@@ -30,9 +31,17 @@ def save_model(model, save_dir, model_name, dataset_name):
 def load_model(load_dir, model_name, dataset_name):
 
     model_file_path = f'{load_dir}/{model_name}_{dataset_name}.joblib'
-    model = joblib.load(model_file_path)
-    print(f'Model loaded successfully from {model_file_path}')
-    return model
+    if not os.path.exists(model_file_path):
+        print(f"Error: Model file not found at {model_file_path}")
+        return None
+
+    try:
+        model = joblib.load(model_file_path)
+        print(f'Model loaded successfully from {model_file_path}')
+        return model
+    except Exception as e:
+        print(f"Error loading model from {model_file_path}: {str(e)}")
+        return None
 
 
 def save_cv_results(cv_results, save_dir, model_name, dataset_name):
@@ -75,6 +84,36 @@ def load_metrics(load_dir, model_name, dataset_name):
     print(f'Metrics loaded successfully from {metrics_file_path}')
     return metrics
 
+
+def get_roc_data(model, X, y):
+    # Determine the type of model
+    model_type = type(model).__name__
+    # Get the scores for the positive class
+    if model_type in ['SVC', 'NuSVC']:
+        # For SVM, check if probability is True, otherwise use decision_function
+        if getattr(model, 'probability', False):
+            y_scores = model.predict_proba(X)[:, 1]
+        else:
+            y_scores = model.decision_function(X)
+    elif model_type in ['MLPClassifier', 'KNeighborsClassifier']:
+        # Neural Network and KNN use predict_proba
+        y_scores = model.predict_proba(X)[:, 1]
+    elif model_type in ['XGBClassifier', 'GradientBoostingClassifier']:
+        # XGBoost can use either predict_proba or predict
+        if hasattr(model, 'predict_proba'):
+            y_scores = model.predict_proba(X)[:, 1]
+        else:
+            y_scores = model.predict(X)
+    else:
+        raise ValueError(f"Unsupported model type: {model_type}")
+    fpr, tpr, _ = roc_curve(y, y_scores)
+    roc_auc = auc(fpr, tpr)
+    roc_data = {
+        'fpr': fpr.tolist(),
+        'tpr': tpr.tolist(),
+        'roc_auc': roc_auc
+    }
+    return roc_data
 def measure_time(fnc):
     """
     Decorator to measure the time of a function
@@ -91,64 +130,43 @@ def measure_time(fnc):
 ############################################
 #  Plots and Visualizations
 ############################################
-def set_global_plot_style(style='seaborn-whitegrid', tick_size=10, label_size=12, title_size=14, legend_size=10, figsize=(10, 6)):
-    plt.style.use(style)
-    sns.set_style('whitegrid')
+def set_plot_style():
+    plt.style.use('default')
+    sns.set_style("whitegrid")
+    plt.rcParams['figure.figsize'] = (10, 6)
+    plt.rcParams['font.size'] = 12
+    plt.rcParams['axes.labelsize'] = 14
+    plt.rcParams['axes.titlesize'] = 16
+    plt.rcParams['xtick.labelsize'] = 12
+    plt.rcParams['ytick.labelsize'] = 12
+    plt.rcParams['legend.fontsize'] = 12
+    plt.rcParams['figure.facecolor'] = 'white'
 
-    # set the font size
-    plt.rc('font', size=tick_size)          # controls default text sizes
-    plt.rc('axes', titlesize=title_size)     # fontsize of the axes title
-    plt.rc('axes', labelsize=label_size)    # fontsize of the x and y labels
-    plt.rc('xtick', labelsize=tick_size)    # fontsize of the tick labels
-    plt.rc('ytick', labelsize=tick_size)    # fontsize of the tick labels
-    plt.rc('legend', fontsize=legend_size)  # legend fontsize
-    plt.rc('figure', titlesize=title_size)  # font size of the figure title
-    # set default figure size
-    plt.rc('figure', figsize=figsize)
-    # increase the linewidth of the axes
-    plt.rc('axes', linewidth=1.5)
-    # set color cycle
-    plt.rc('axes', prop_cycle=plt.cycler('color',
-                                         ['#E24A33', '#348ABD', '#988ED5', '#777777', '#FBC15E', '#8EBA42', '#FFB5B8']))
-    # set the background color
-    plt.rc('figure', facecolor='white')
-
-    print('Global plot style set successfully!')
-
-
-
-def plot_leanring_curve(model, X, y, cv, train_size=np.linspace(0.1, 1.0, 5)):
+def plot_learning_curve(lr_data, model_name):
     """
-    plot the learning curve: error vs training size and fit time vs training size
-    :param model: the best model from GridSearchCV
-    :param X: the X_train
-    :param y: the y_train
-    :param cv: the k-fold
-    :param train_size: relative training size
+    plot the learning curve: error vs training size vs training size
+    :param lr_data: the learning curve data, a dictionary containing the following keys: train_sizes, train_scores, val_scores, fit_times
     """
-    train_sizes, train_scores, val_scores, fit_times, _ = learning_curve(model, X, y, train_sizes=train_size, cv=cv, n_jobs=-1, random_state=17, verbose=2, return_times=True)
+    set_plot_style()
+    if model_name == 'nn':
+        x_label = 'Epochs'
+        train_sizes = lr_data['epochs']
+        train_mean = lr_data['train_scores']
+        val_mean = lr_data['val_scores']
+    else:
+        x_label = 'Training size'
+        train_sizes = lr_data['train_sizes']
+        train_mean = np.mean(lr_data['train_scores'], axis=1)
+        val_mean = np.mean(lr_data['val_scores'], axis=1)
 
-    train_error_mean = 1 - np.mean(train_scores, axis=1)
-    val_error_mean = 1 - np.mean(val_scores, axis=1)
-    fit_times = np.mean(fit_times, axis=1)
-
-    fig, ax = plt.subplots(figsize=None)
-    ax.plot(train_sizes, train_error_mean, label='Training error', color='r', linestyle='--', marker='o')
-    ax.plot(train_sizes, val_error_mean, label='Validation error', color='b', linestyle='-', marker='o')
-    ax.set_xlabel('Training size')
-    ax.set_ylabel('Error')
+    fig, ax = plt.subplots()
+    ax.plot(train_sizes, train_mean, label='Training score', color='r', linestyle='--', marker='o')
+    ax.plot(train_sizes, val_mean, label='Validation score', color='b', linestyle='-', marker='o')
+    ax.set_xlabel(x_label)
+    ax.set_ylabel('Score')
     ax.set_title('Learning Curve')
-    ax.legend()
-
-    # plot the fit time
-    fig2, ax2 = plt.subplots(figsize=None)
-    ax2.plot(train_sizes, fit_times, label='Fit time', color='g', linestyle='--', marker='o')
-    ax2.set_xlabel('Training size')
-    ax2.set_ylabel('Fit time')
-    ax2.set_title('Fit Time')
-    ax2.legend()
-
-    return fig, fig2
+    ax.legend(loc='best')
+    return fig
 
 def format_cv_results(cv_results):
     """
@@ -180,7 +198,7 @@ def format_cv_results(cv_results):
     return results
 
 
-def plot_complexity_curve(df, x_axis, title):
+def plot_complexity_curve(df, x_axis, y_train, y_val, title):
     """
     plot the complexity curve: error vs complexity parameter
     :param title:
@@ -189,23 +207,53 @@ def plot_complexity_curve(df, x_axis, title):
     :param group: if none, no 
     :return:
     """
-    fig, ax = plt.subplots(figsize=None)
+    set_plot_style()
+    fig, ax = plt.subplots()
 
     if df[x_axis].dtype == 'object' or df[x_axis].dtype == 'str':
         # bar plot of the categorical variable
         x = np.arange(len(df[x_axis]))
         width = 0.35
 
-        ax.bar(x - width/2, df['mean_train_error'], width, label='Training error', color='r', alpha=0.5)
-        ax.bar(x + width/2, df['mean_test_error'], width, label='Validation error', color='b', alpha=0.5)
+        ax.bar(x - width/2, df[y_train], width, label='Training score', color='r', alpha=0.5)
+        ax.bar(x + width/2, df[y_val], width, label='Validation score', color='b', alpha=0.5)
         ax.set_xticks(x)
         ax.set_xticklabels(df[x_axis], rotation=45, ha='right')
     else:
-        ax.plot(df[x_axis], df['mean_train_error'], label='Training error', linestyle='--', marker='o', color='r')
-        ax.plot(df[x_axis], df['mean_test_error'], label='Validation error', linestyle='-', marker='o', color='b')
+        ax.plot(df[x_axis], df[y_train], label='Training score', linestyle='--', marker='o', color='r')
+        ax.plot(df[x_axis], df[y_val], label='Validation score', linestyle='-', marker='o', color='b')
 
     plt.xlabel(x_axis)
-    plt.ylabel('Error')
+    plt.ylabel('Score')
     plt.title(title)
-    plt.legend()
+    plt.legend(loc='best')
+    return plt, ax
+
+def plot_training_time(df, x_axis, y_train_time, title):
+    """
+    plot the training time curve: time vs complexity parameter
+    :param df: the dataframe containing the cv_results
+    :param x_axis: the complexity parameter
+    :param group: if none, no 
+    :return:
+    """
+    set_plot_style()
+    fig, ax = plt.subplots()
+
+    if df[x_axis].dtype == 'object' or df[x_axis].dtype == 'str':
+        # bar plot of the categorical variable
+        x = np.arange(len(df[x_axis]))
+        width = 0.35
+
+        ax.bar(x, df[y_train_time], width, label='Training time', color='r', alpha=0.5)
+        ax.set_xticks(x)
+        ax.set_xticklabels(df[x_axis], rotation=45, ha='right')
+    else:
+        ax.plot(df[x_axis], df[y_train_time], label='Training time', linestyle='--', marker='o', color='r')
+
+    plt.xlabel(x_axis)
+    plt.ylabel('Training time (s)')
+    plt.title(title)
+    plt.legend(loc='best')
     return plt
+

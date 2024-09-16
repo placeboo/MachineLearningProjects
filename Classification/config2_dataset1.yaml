@@ -1,0 +1,47 @@
+output:
+  results_dir: 'results/dataset1/model_outputs2'
+dataset:
+  name: 'bank_campaign'
+  file_path: 'data/dataset1/raw/Bank_Campaign.csv'
+  output_dir: 'data/dataset1/processed'
+  target_column: 'subscribed'
+  rerun: False
+  num_features:
+    - 'age'
+    - 'duration'
+    - 'campaign'
+    - 'previous'
+    - 'emp.var.rate'
+    - 'cons.price.idx'
+    - 'cons.conf.idx'
+    - 'euribor3m'
+    - 'nr.employed'
+  cat_features:
+    - 'job'
+    - 'marital'
+    - 'education'
+    - 'day_of_week'
+    - 'default'
+    - 'housing'
+    - 'loan'
+    - 'contact'
+    - 'month'
+    - 'poutcome'
+    - 'pdays'
+  random_state: 17
+
+models:
+  knn:
+    param_grid:
+      'n_neighbors': [20]
+      'weights': [ 'uniform', 'distance' ]
+  nn:
+    param_grid:
+      'hidden_layer_sizes': [[32, 5]]
+      'learning_rate': ['adaptive']
+      'learning_rate_init': [1.0, 0.5, 0.1, 0.08, 0.06, 0.04, 0.02, 0.01, .005, .001, .0005, .0001]
+
+cross_validation:
+  n_splits: 5
+
+
