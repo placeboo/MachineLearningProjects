@@ -12,6 +12,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, FunctionTransformer
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
+from imblearn.over_sampling import SMOTE
 from scipy import sparse
 import numpy as np
 import joblib
@@ -102,11 +103,14 @@ def preprocess_data(df, target_column, num_features, cat_features, random_state=
     # data split
     X = df.drop(target_column, axis=1)
     y = df[target_column]
+
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=random_state)
 
     X_train_processed = preprocessor.fit_transform(X_train)
     X_test_processed = preprocessor.transform(X_test)
 
+    smote = SMOTE(random_state=random_state)
+    X_train_processed, y_train = smote.fit_resample(X_train_processed, y_train)
     return X_train_processed, X_test_processed, y_train, y_test, preprocessor
 
 

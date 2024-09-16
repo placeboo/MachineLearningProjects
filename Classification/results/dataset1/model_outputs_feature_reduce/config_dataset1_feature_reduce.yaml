@@ -1,5 +1,5 @@
 output:
-  results_dir: 'results/dataset1/model_outputs'
+  results_dir: 'results/dataset1/model_outputs_feature_reduce'
 dataset:
   name: 'bank_campaign'
   file_path: 'data/dataset1/raw/Bank_Campaign.csv'
@@ -17,15 +17,10 @@ dataset:
     - 'euribor3m'
     - 'nr.employed'
   cat_features:
-    - 'job'
-    - 'marital'
     - 'education'
     - 'day_of_week'
     - 'default'
-    - 'housing'
-    - 'loan'
     - 'contact'
-    - 'month'
     - 'poutcome'
     - 'pdays'
   random_state: 17
@@ -33,19 +28,21 @@ dataset:
 models:
   knn:
     param_grid:
-      'n_neighbors': [3, 5, 10, 15, 20, 25, 30]
+      'n_neighbors': [20]
   svm:
     param_grid:
-      'kernel': [ 'sigmoid', 'rbf', 'poly' ]
-      'gamma': [ 'scale', 'auto', 0.1, 0.01 ]
+      'kernel': ['rbf']
+      'gamma': [ 0.1]
   nn:
     param_grid:
-      'hidden_layer_sizes': [ [5], [10], [15], [20], [25], [30], [35], [40], [45], [50], [32, 5], [32, 10], [32, 15], [32, 20], [32, 25], [32, 30], [32, 32]]
+      'hidden_layer_sizes': [ [32, 5]]
+      'learning_rate': ['adaptive']
+      'learning_rate_init': [0.001]
   boosting:
     param_grid:
-      'n_estimators': [50, 100, 150, 200]
-      'max_depth': [3, 5, 7, 9]
-      'subsample': [0.5, 0.7, 0.9, 1.0]
+      'n_estimators': [200]
+      'max_depth': [3]
+      'subsample': [0.7]
 cross_validation:
   n_splits: 5
 

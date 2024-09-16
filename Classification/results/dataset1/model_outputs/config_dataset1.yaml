@@ -41,7 +41,11 @@ models:
   nn:
     param_grid:
       'hidden_layer_sizes': [ [5], [10], [15], [20], [25], [30], [35], [40], [45], [50], [32, 5], [32, 10], [32, 15], [32, 20], [32, 25], [32, 30], [32, 32]]
-
+  boosting:
+    param_grid:
+      'n_estimators': [50, 100, 150, 200]
+      'max_depth': [3, 5, 7, 9]
+      'subsample': [0.5, 0.7, 0.9, 1.0]
 cross_validation:
   n_splits: 5
 

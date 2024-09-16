@@ -10,10 +10,10 @@ import joblib
 from scipy import sparse
 import os
 from sklearn.model_selection import learning_curve
-from src.common.utils import save_model,save_cv_results,load_model, format_cv_results, get_roc_data, save_metrics
+from src.common.utils import save_model,save_cv_results,get_feature_names_from_preprocessor, format_cv_results, get_roc_data, save_metrics
 from src.dataset1_tabular.models import Classifier
 from src.dataset1_tabular.preprocessing import load_csv, preprocess_data, save_processed_data
-
+from imblearn.over_sampling import SMOTE
 
 def load_config(config_path):
     with open(config_path, 'r') as file:
@@ -85,17 +85,18 @@ def main(config_path, model_name):
                  f'{config["dataset"]["name"]}_roc')
 
     # save feature importance
-    if hasattr(clf.best_model, 'feature_importances_'):
-        feature_importances = clf.best_model.feature_importances_
-        feature_names = clf.best_model.feature_names_in_  # Assuming scikit-learn 0.24+
-        importances_df = pd.DataFrame({'feature': feature_names, 'importance': feature_importances})
-        importances_df = importances_df.sort_values('importance', ascending=False)
-        importances_df.to_csv(f"{output_dir}/{model_name}_feature_importances.csv", index=False)
-
+    if model_name == 'boosting':
+        feature_names = get_feature_names_from_preprocessor(preprocessor)
+        feature_importance = clf.best_model.feature_importances_
+        feature_importance_df = pd.DataFrame(
+            {'feature': feature_names, 'importance': feature_importance})
+        feature_importance_df = feature_importance_df.sort_values('importance', ascending=False)
+        feature_importance_df.to_csv(f"{result_dir}/{model_name}_feature_importance.csv", index=False)
+        print(f"Feature importance saved to {result_dir}/{model_name}_feature_importance.csv")
     # save hyperparmaeter search results
     cv_results = format_cv_results(clf.cv_results)
-    cv_results.to_csv(f"{output_dir}/{model_name}_cv_results.csv", index=False)
-
+    cv_results.to_csv(f"{result_dir}/{model_name}_cv_results.csv", index=False)
+    print(f"Hyperparameter search results saved to {result_dir}/{model_name}_cv_results.csv")
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train and evaluate a classifier')
     parser.add_argument('--config', '-c', help='path to config file', required=True)
