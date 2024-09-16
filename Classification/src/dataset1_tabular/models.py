@@ -1,5 +1,7 @@
+import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV, learning_curve
 from src.common.evaluation import evaluate_model
@@ -26,6 +28,8 @@ class Classifier:
                                        early_stopping=True)
         elif self.model_type == 'svm':
             self.model = SVC(random_state=self.random_state)
+        elif self.model_type == 'boosting':
+            self.model = GradientBoostingClassifier(random_state=self.random_state)
         else:
             raise ValueError('Invalid model. Choose from knn, nn, or svm')
 
@@ -86,4 +90,6 @@ class Classifier:
             'epochs': list(range(1, epochs + 1))
         }
         return learning_curve_data
+
+
 

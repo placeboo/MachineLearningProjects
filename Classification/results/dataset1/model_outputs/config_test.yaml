@@ -29,9 +29,9 @@ dataset:
   random_state: 17
 
 models:
-  nn:
+  boosting:
     param_grid:
-      'hidden_layer_sizes': [ [32], [16]]
+      'n_estimators': [50, 100]
 cross_validation:
   n_splits: 3
 

@@ -11,6 +11,24 @@ from sklearn.model_selection import learning_curve
 from sklearn.metrics import roc_curve, auc
 import pickle
 
+
+def get_feature_names_from_preprocessor(preprocessor):
+    feature_names = []
+    for name, trans, column in preprocessor.transformers_:
+        if name == 'num':
+            feature_names.extend(column)
+        elif name in ['cat', 'pdays']:
+            if hasattr(trans, 'named_steps') and 'onehot' in trans.named_steps:
+                encoder = trans.named_steps['onehot']
+                if hasattr(encoder, 'get_feature_names_out'):
+                    cat_features = encoder.get_feature_names_out(column)
+                else:
+                    cat_features = [f"{col}_{val}" for col, vals in zip(column, encoder.categories_)
+                                    for val in vals]
+                feature_names.extend(cat_features)
+            else:
+                feature_names.extend(column)
+    return feature_names
 # save the model
 def save_model(model, save_dir, model_name, dataset_name):
     """
