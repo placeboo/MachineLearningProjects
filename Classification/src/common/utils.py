@@ -5,12 +5,17 @@ import joblib
 import os
 import json
 import time
+import yaml
 
 import pandas as pd
 from sklearn.model_selection import learning_curve
 from sklearn.metrics import roc_curve, auc
 import pickle
 
+def load_config(config_path):
+    with open(config_path, 'r') as file:
+        config = yaml.safe_load(file)
+    return config
 
 def get_feature_names_from_preprocessor(preprocessor):
     feature_names = []

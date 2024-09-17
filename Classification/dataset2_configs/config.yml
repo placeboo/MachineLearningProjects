@@ -1,0 +1,6 @@
+dataset:
+  name: 'nlp'
+  file_path: 'data/dataset2/raw/Youtube-Spam-Dataset.csv'
+  output_dir: 'data/dataset2/processed/tfidf'
+  embedding_method: 'tfidf'
+  rerun: True

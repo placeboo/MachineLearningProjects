@@ -10,15 +10,10 @@ import joblib
 from scipy import sparse
 import os
 from sklearn.model_selection import learning_curve
-from src.common.utils import save_model,save_cv_results,get_feature_names_from_preprocessor, format_cv_results, get_roc_data, save_metrics
+from src.common.utils import load_config, save_model,save_cv_results,get_feature_names_from_preprocessor, format_cv_results, get_roc_data, save_metrics
 from src.dataset1_tabular.models import Classifier
 from src.dataset1_tabular.preprocessing import load_csv, preprocess_data, save_processed_data
 from imblearn.over_sampling import SMOTE
-
-def load_config(config_path):
-    with open(config_path, 'r') as file:
-        config = yaml.safe_load(file)
-    return config
 
 
 def main(config_path, model_name):

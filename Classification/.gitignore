@@ -13,3 +13,11 @@ data/
 
 # figures
 figures/
+
+# latex metadata
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.synctex.gz
