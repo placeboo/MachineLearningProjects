@@ -1,0 +1,40 @@
+dataset:
+  name: 'bank_campaign'
+  file_path: 'data/dataset1/raw/Bank_Campaign.csv'
+  output_dir: 'data/dataset1/processed'
+  target_column: 'subscribed'
+  rerun: False
+  num_features:
+    - 'age'
+    - 'duration'
+    - 'campaign'
+    - 'previous'
+    - 'emp.var.rate'
+    - 'cons.price.idx'
+    - 'cons.conf.idx'
+    - 'euribor3m'
+    - 'nr.employed'
+  cat_features:
+    - 'job'
+    - 'marital'
+    - 'education'
+    - 'day_of_week'
+    - 'default'
+    - 'housing'
+    - 'loan'
+    - 'contact'
+    - 'month'
+    - 'poutcome'
+    - 'pdays'
+  random_state: 17
+
+models:
+  boosting:
+    param_grid:
+      'n_estimators': [50, 100]
+cross_validation:
+  n_splits: 3
+
+output:
+  results_dir: 'results/dataset1/model_outputs'
+
