@@ -1,0 +1,91 @@
+cross_validation:
+  n_splits: 5
+dataset:
+  embedding_config:
+    max_features: 500
+  embedding_method: tfidf
+  file_path: data/dataset2/raw/Youtube-Spam-Dataset.csv
+  name: nlp
+  output_dir: data/dataset2/processed/tfidf
+  rerun: false
+model_output_dir: results/dataset2/model_outputs
+models:
+  boosting:
+    param_grid:
+      max_depth:
+      - 10
+      - 15
+      - 20
+      - 25
+      - 30
+      - 35
+      - 40
+      n_estimators:
+      - 50
+      - 100
+      - 150
+      - 200
+      - 250
+  knn:
+    param_grid:
+      n_neighbors:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 10
+      - 15
+      - 20
+      - 25
+      - 30
+      weights:
+      - uniform
+      - distance
+  nn:
+    param_grid:
+      hidden_layer_sizes:
+      - - 50
+      - - 100
+      - - 150
+      - - 200
+      - - 250
+      - - 300
+      - - 350
+      - - 400
+      - - 450
+      - - 500
+      - - 250
+        - 50
+      - - 250
+        - 100
+      - - 250
+        - 150
+      learning_rate:
+      - adaptive
+      learning_rate_init:
+      - 1.0
+      - 0.5
+      - 0.1
+      - 0.08
+      - 0.06
+      - 0.04
+      - 0.02
+      - 0.01
+      - 0.005
+      - 0.001
+      - 0.0005
+      - 0.0001
+  svm:
+    param_grid:
+      gamma:
+      - scale
+      - auto
+      - 0.1
+      - 0.01
+      kernel:
+      - rbf
+      - sigmoid
+      - linear
+      - poly
+random_state: 17
