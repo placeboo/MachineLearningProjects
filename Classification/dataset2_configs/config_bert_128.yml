@@ -1,11 +1,11 @@
 dataset:
   name: 'nlp'
   file_path: 'data/dataset2/raw/Youtube-Spam-Dataset.csv'
-  output_dir: 'data/dataset2/processed/tfidf'
-  embedding_method: 'tfidf'
-  rerun: False
+  output_dir: 'data/dataset2/processed/transformer_128'
+  embedding_method: 'transformer'
+  rerun: True
   embedding_config:
-    max_features: 500
+    max_seq_length: 128
 
 models:
   knn:
@@ -24,8 +24,8 @@ models:
   boosting:
     param_grid:
       'n_estimators': [50, 100, 150, 200, 250]
-      'max_depth': [10, 15, 20, 25, 30, 35, 40]
+      'max_depth': [3, 5, 7, 9]
 random_state: 17
 cross_validation:
     n_splits: 5
-model_output_dir: 'results/dataset2/model_outputs'
+model_output_dir: 'results/dataset2/model_outputs_bert_128'

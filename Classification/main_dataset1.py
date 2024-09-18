@@ -46,10 +46,10 @@ def main(config_path, model_name):
                             config['dataset']['num_features'],\
                             config['dataset']['cat_features'])
         print('Data preprocessed successfully!')
-    # save
-    save_processed_data(X_train, X_test, y_train, y_test, preprocessor, output_dir)
-    print(f"X_train shape: {X_train.shape}")
-    print(f"X_test shape: {X_test.shape}")
+        # save
+        save_processed_data(X_train, X_test, y_train, y_test, preprocessor, output_dir)
+        print(f"X_train shape: {X_train.shape}")
+        print(f"X_test shape: {X_test.shape}")
 
     # train the model
     cv = config['cross_validation']['n_splits']

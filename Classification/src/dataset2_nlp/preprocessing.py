@@ -44,7 +44,7 @@ def clean_text(text):
     text = ' '.join(tokens)
     return text
 
-def create_embedding(df, method='tfidf', **kwargs):
+def create_embedding(df, method='tfidf', embedding_config=None):
     """
     Create emebedding from text data
     :param df: the dataframe containing the text data
@@ -55,15 +55,15 @@ def create_embedding(df, method='tfidf', **kwargs):
     df['cleaned_text'] = df['combined_text'].apply(clean_text)
 
     if method == 'tfidf':
-        max_features = kwargs.get('max_features', 1000)
+        max_features = embedding_config.get('max_features', 1000)
         vectorizer = TfidfVectorizer(max_features=max_features)
         embedding = vectorizer.fit_transform(df['cleaned_text'])
         return embedding, vectorizer
 
     elif method == 'transformer':
-        model_name = kwargs.get('model_name', 'distilbert-base-nli-mean-tokens')
-        max_seq_length = kwargs.get('max_seq_length', 128)
-        batch_size = kwargs.get('batch_size', 32)
+        model_name = embedding_config.get('model_name', 'distilbert-base-nli-mean-tokens')
+        max_seq_length = embedding_config.get('max_seq_length', 128)
+        batch_size = embedding_config.get('batch_size', 32)
 
         model = SentenceTransformer(model_name)
         model.max_seq_length = max_seq_length
@@ -74,10 +74,10 @@ def create_embedding(df, method='tfidf', **kwargs):
     else:
         raise ValueError('Invalid method. Choose from tfidf or transformer')
 
-def preprocess_data(data, embedding_method, **kwargs):
+def preprocess_data(data, embedding_method, embedding_config):
     download_nltk_resources()
     data = combine_feature(data)
-    X, embedder = create_embedding(data, embedding_method, **kwargs)
+    X, embedder = create_embedding(data, embedding_method, embedding_config)
     y = data['CLASS'].values
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=17)
     return X_train, X_test, y_train, y_test, embedder
@@ -97,8 +97,25 @@ def load_embedder(file_path, embedder_type):
 def save_process_data(X_train, X_test, y_train, y_test, embedder, output_dir):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    sparse.save_npz(os.path.join(output_dir, 'X_train.npz'), X_train)
-    sparse.save_npz(os.path.join(output_dir, 'X_test.npz'), X_test)
+
+    if sparse.issparse(X_train):
+        sparse.save_npz(os.path.join(output_dir, 'X_train.npz'), X_train)
+        sparse.save_npz(os.path.join(output_dir, 'X_test.npz'), X_test)
+    else:
+        np.save(os.path.join(output_dir, 'X_train.npy'), X_train)
+        np.save(os.path.join(output_dir, 'X_test.npy'), X_test)
+
     np.save(os.path.join(output_dir, 'y_train.npy'), y_train)
     np.save(os.path.join(output_dir, 'y_test.npy'), y_test)
     save_embedder(embedder, os.path.join(output_dir, 'embedder.joblib'))
+
+def load_process_data(output_dir):
+    try:
+        X_train = sparse.load_npz(os.path.join(output_dir, 'X_train.npz'))
+        X_test = sparse.load_npz(os.path.join(output_dir, 'X_test.npz'))
+    except:
+        X_train = np.load(os.path.join(output_dir, 'X_train.npy'))
+        X_test = np.load(os.path.join(output_dir, 'X_test.npy'))
+    y_train = np.load(os.path.join(output_dir, 'y_train.npy'))
+    y_test = np.load(os.path.join(output_dir, 'y_test.npy'))
+    return X_train, X_test, y_train, y_test
