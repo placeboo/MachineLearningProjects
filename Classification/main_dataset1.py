@@ -12,7 +12,7 @@ import os
 from sklearn.model_selection import learning_curve
 from src.common.utils import load_config, save_model,save_cv_results,get_feature_names_from_preprocessor, format_cv_results, get_roc_data, save_metrics
 from src.dataset1_tabular.models import Classifier
-from src.dataset1_tabular.preprocessing import load_csv, preprocess_data, save_processed_data
+from src.dataset1_tabular.preprocessing import load_csv, preprocess_data, save_processed_data, load_processed_data
 from imblearn.over_sampling import SMOTE
 
 
@@ -32,24 +32,23 @@ def main(config_path, model_name):
     output_dir = config['dataset']['output_dir']
     if not config['dataset']['rerun']:
         # preprocess has been done. Load the processed data
-        X_train = sparse.load_npz(os.path.join(output_dir, 'X_train.npz'))
-        X_test = sparse.load_npz(os.path.join(output_dir, 'X_test.npz'))
-        y_train = np.load(os.path.join(output_dir, 'y_train.npy'))
-        y_test = np.load(os.path.join(output_dir, 'y_test.npy'))
-        preprocessor = joblib.load(os.path.join(output_dir, 'preprocessor.joblib'))
+        X_train, X_test, y_train, y_test = load_processed_data(output_dir)
         print('Data loaded successfully!')
+        print(f"X_train shape: {X_train.shape}")
+        print(f'y_train shape: {y_train.shape}')
     else: # preprocess data
         data = load_csv(config['dataset']['file_path'])
         X_train, X_test, y_train, y_test, preprocessor = \
             preprocess_data(data, \
                             config['dataset']['target_column'],\
                             config['dataset']['num_features'],\
-                            config['dataset']['cat_features'])
+                            config['dataset']['cat_features'],
+                            config['dataset'].get('is_smote', False))
         print('Data preprocessed successfully!')
         # save
         save_processed_data(X_train, X_test, y_train, y_test, preprocessor, output_dir)
-        print(f"X_train shape: {X_train.shape}")
-        print(f"X_test shape: {X_test.shape}")
+    print(f"X_train shape: {X_train.shape}")
+    print(f"X_test shape: {X_test.shape}")
 
     # train the model
     cv = config['cross_validation']['n_splits']
