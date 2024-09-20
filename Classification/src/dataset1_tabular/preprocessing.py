@@ -91,7 +91,7 @@ def create_preprocessing_pipeline(num_features, cat_features):
     return preprocessor
 
 
-def preprocess_data(df, target_column, num_features, cat_features, random_state=17):
+def preprocess_data(df, target_column, num_features, cat_features, random_state=17, is_smote=False):
 
     df = convert_target(df, target_column)
 
@@ -109,8 +109,10 @@ def preprocess_data(df, target_column, num_features, cat_features, random_state=
     X_train_processed = preprocessor.fit_transform(X_train)
     X_test_processed = preprocessor.transform(X_test)
 
-    smote = SMOTE(random_state=random_state)
-    X_train_processed, y_train = smote.fit_resample(X_train_processed, y_train)
+    if is_smote:
+        smote = SMOTE(random_state=random_state)
+        X_train_processed, y_train = smote.fit_resample(X_train_processed, y_train)
+
     return X_train_processed, X_test_processed, y_train, y_test, preprocessor
 
 
@@ -119,14 +121,29 @@ def save_processed_data(X_train, X_test, y_train, y_test, preprocessor, output_d
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    sparse.save_npz(os.path.join(output_dir, 'X_train.npz'), X_train)
-    sparse.save_npz(os.path.join(output_dir, 'X_test.npz'), X_test)
+    if sparse.issparse(X_train):
+        sparse.save_npz(os.path.join(output_dir, 'X_train.npz'), X_train)
+        sparse.save_npz(os.path.join(output_dir, 'X_test.npz'), X_test)
+    else:
+        np.save(os.path.join(output_dir, 'X_train.npy'), X_train)
+        np.save(os.path.join(output_dir, 'X_test.npy'), X_test)
+
     np.save(os.path.join(output_dir, 'y_train.npy'), y_train)
     np.save(os.path.join(output_dir, 'y_test.npy'), y_test)
     joblib.dump(preprocessor, os.path.join(output_dir, 'preprocessor.joblib'))
 
     print('Data saved successfully!')
 
+def load_processed_data(output_dir):
+    try:
+        X_train = sparse.load_npz(os.path.join(output_dir, 'X_train.npz'))
+        X_test = sparse.load_npz(os.path.join(output_dir, 'X_test.npz'))
+    except:
+        X_train = np.load(os.path.join(output_dir, 'X_train.npy'))
+        X_test = np.load(os.path.join(output_dir, 'X_test.npy'))
+    y_train = np.load(os.path.join(output_dir, 'y_train.npy'))
+    y_test = np.load(os.path.join(output_dir, 'y_test.npy'))
+    return X_train, X_test, y_train, y_test
 
 
 

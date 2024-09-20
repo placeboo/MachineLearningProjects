@@ -6,6 +6,7 @@ from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV, learning_curve
 from src.common.evaluation import evaluate_model
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import make_scorer, f1_score
 
 class Classifier:
     def __init__(self, model, X_train, y_train, X_test, y_test, param_grid, cv, random_state=17):
@@ -34,7 +35,7 @@ class Classifier:
             raise ValueError('Invalid model. Choose from knn, nn, or svm')
 
     def train(self):
-        grid_search = GridSearchCV(self.model, param_grid=self.param_grid, cv=self.cv, n_jobs=-3, return_train_score=True, verbose=3)
+        grid_search = GridSearchCV(self.model, param_grid=self.param_grid, scoring='f1', cv=self.cv, n_jobs=-3, return_train_score=True, verbose=3)
 
         grid_search.fit(self.X_train, self.y_train)
         print(f'Best parameters: {grid_search.best_params_}')
@@ -54,7 +55,7 @@ class Classifier:
             = learning_curve(self.best_model, self.X_train, self.y_train, \
                              train_sizes=[0.01, 0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 1], \
                              cv=self.cv, n_jobs=-3, random_state=self.random_state, \
-                             verbose=3, return_times=True)
+                             verbose=3, return_times=True, scoring='f1')
         learning_curve_data = {
             'train_sizes': train_sizes.tolist(),
             'train_scores': train_scores.tolist(),
@@ -76,8 +77,12 @@ class Classifier:
 
         for i in range(1, epochs + 1):
             model.partial_fit(X_train_split, y_train_split, classes=[-1, 1])
-            train_score = model.score(X_train_split, y_train_split)
-            val_score = model.score(X_val, y_val)
+            y_train_pred = model.predict(X_train_split)
+            y_val_pred = model.predict(X_val)
+            train_score = f1_score(y_train_split, y_train_pred)
+            val_score = f1_score(y_val, y_val_pred)
+            # train_score = model.score(X_train_split, y_train_split)
+            # val_score = model.score(X_val, y_val)
             train_scores.append(train_score)
             val_scores.append(val_score)
 
