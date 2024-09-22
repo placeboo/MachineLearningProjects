@@ -32,7 +32,7 @@ def main(config_path, model_name):
     output_dir = config['dataset']['output_dir']
     if not config['dataset']['rerun']:
         # preprocess has been done. Load the processed data
-        X_train, X_test, y_train, y_test = load_processed_data(output_dir)
+        X_train, X_test, y_train, y_test, preprocessor = load_processed_data(output_dir)
         print('Data loaded successfully!')
         print(f"X_train shape: {X_train.shape}")
         print(f'y_train shape: {y_train.shape}')

@@ -21,3 +21,7 @@ figures/
 *.log
 *.out
 *.synctex.gz
+writing/
+*.DS_Store
+*.pdf
+*.png

@@ -87,7 +87,7 @@ def save_plot(plt, save_dir, model_name, plot_name, dataset_name):
         os.makedirs(save_dir, exist_ok=True)
 
     plot_file_path = f'{save_dir}/{model_name}_{plot_name}_{dataset_name}.png'
-    plt.savefig(plot_file_path)
+    plt.savefig(plot_file_path, dpi=300, bbox_inches='tight')
     print(f'Plot saved successfully at {plot_file_path}')
 
 # save evaluation metrics
@@ -156,40 +156,52 @@ def measure_time(fnc):
 def set_plot_style():
     plt.style.use('default')
     sns.set_style("whitegrid")
-    plt.rcParams['figure.figsize'] = (10, 6)
-    plt.rcParams['font.size'] = 12
-    plt.rcParams['axes.labelsize'] = 14
-    plt.rcParams['axes.titlesize'] = 16
-    plt.rcParams['xtick.labelsize'] = 12
-    plt.rcParams['ytick.labelsize'] = 12
-    plt.rcParams['legend.fontsize'] = 12
-    plt.rcParams['figure.facecolor'] = 'white'
+    plt.rcParams.update({
+        'figure.figsize': (3.5, 2.5),  # Single column width for IEEE
+        'font.size': 8,
+        'axes.labelsize': 9,
+        'axes.titlesize': 10,
+        'xtick.labelsize': 8,
+        'ytick.labelsize': 8,
+        'legend.fontsize': 8,
+        'figure.facecolor': 'white',
+        'text.usetex': True,
+        'font.family': 'serif',
+        'font.serif': ['Computer Modern Roman'],
+    })
 
-def plot_learning_curve(lr_data, model_name):
+def plot_learning_curve(lr_data, model_name, y_label='Error'):
     """
-    plot the learning curve: error vs training size vs training size
-    :param lr_data: the learning curve data, a dictionary containing the following keys: train_sizes, train_scores, val_scores, fit_times
+    Plot the learning curve: error vs training size or epochs
+    :param lr_data: dictionary with keys: train_sizes/epochs, train_scores, val_scores
+    :param model_name: string, either 'nn' for neural network or other for different models
+    :param y_label: string, label for y-axis
     """
     set_plot_style()
     if model_name == 'nn':
         x_label = 'Epochs'
-        train_sizes = lr_data['epochs']
-        train_mean = lr_data['train_scores']
-        val_mean = lr_data['val_scores']
+        # take the first 20 epochs
+        train_sizes = lr_data['epochs'][:20]
+        train_mean = 1-np.array(lr_data['train_scores'][:20],dtype=float)
+        val_mean = 1-np.array(lr_data['val_scores'][:20],dtype=float)
     else:
         x_label = 'Training size'
         train_sizes = lr_data['train_sizes']
-        train_mean = np.mean(lr_data['train_scores'], axis=1)
-        val_mean = np.mean(lr_data['val_scores'], axis=1)
-
+        train_mean = 1-np.mean(lr_data['train_scores'], axis=1)
+        val_mean = 1-np.mean(lr_data['val_scores'], axis=1)
+    
     fig, ax = plt.subplots()
-    ax.plot(train_sizes, train_mean, label='Training score', color='r', linestyle='--', marker='o')
-    ax.plot(train_sizes, val_mean, label='Validation score', color='b', linestyle='-', marker='o')
+    ax.plot(train_sizes, train_mean, label='Training score', color='r', linestyle='--', marker='o', markersize=4)
+    ax.plot(train_sizes, val_mean, label='Validation score', color='b', linestyle='-', marker='o', markersize=4)
+    
     ax.set_xlabel(x_label)
-    ax.set_ylabel('Score')
+    ax.set_ylabel(y_label)
     ax.set_title('Learning Curve')
-    ax.legend(loc='best')
+    ax.legend(loc='best', frameon=True, fancybox=False, edgecolor='black')
+    
+    plt.tight_layout()
     return fig
+
 
 def format_cv_results(cv_results):
     """
@@ -221,62 +233,55 @@ def format_cv_results(cv_results):
     return results
 
 
-def plot_complexity_curve(df, x_axis, y_train, y_val, title):
+def plot_complexity_curve(df, x_axis, y_train, y_val, title, ylabel='Score'):
     """
-    plot the complexity curve: error vs complexity parameter
-    :param title:
-    :param df: the dataframe containing the cv_results
-    :param x_axis: the complexity parameter
-    :param group: if none, no 
-    :return:
+    Plot the complexity curve: error vs complexity parameter
+    :param df: dataframe containing the cv_results
+    :param x_axis: complexity parameter column name
+    :param y_train: training score column name
+    :param y_val: validation score column name
+    :param title: plot title
+    :param ylabel: y-axis label
+    :return: figure and axis objects
     """
     set_plot_style()
     fig, ax = plt.subplots()
 
-    if df[x_axis].dtype == 'object' or df[x_axis].dtype == 'str':
-        # bar plot of the categorical variable
+    if df[x_axis].dtype in ['object', 'str']:
         x = np.arange(len(df[x_axis]))
         width = 0.35
-
         ax.bar(x - width/2, df[y_train], width, label='Training score', color='r', alpha=0.5)
         ax.bar(x + width/2, df[y_val], width, label='Validation score', color='b', alpha=0.5)
         ax.set_xticks(x)
         ax.set_xticklabels(df[x_axis], rotation=45, ha='right')
     else:
-        ax.plot(df[x_axis], df[y_train], label='Training score', linestyle='--', marker='o', color='r')
-        ax.plot(df[x_axis], df[y_val], label='Validation score', linestyle='-', marker='o', color='b')
+        ax.plot(df[x_axis], df[y_train], label='Training score', linestyle='--', marker='o', color='r', markersize=4)
+        ax.plot(df[x_axis], df[y_val], label='Validation score', linestyle='-', marker='o', color='b', markersize=4)
 
-    plt.xlabel(x_axis)
-    plt.ylabel('Score')
-    plt.title(title)
-    plt.legend(loc='best')
-    return plt, ax
+    ax.set_xlabel(x_axis)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.legend(loc='best', frameon=True, fancybox=False, edgecolor='black')
 
-def plot_training_time(df, x_axis, y_train_time, title):
-    """
-    plot the training time curve: time vs complexity parameter
-    :param df: the dataframe containing the cv_results
-    :param x_axis: the complexity parameter
-    :param group: if none, no 
-    :return:
-    """
+    plt.tight_layout()
+    return fig, ax
+
+def plot_training_time(df, x_axis, title):
     set_plot_style()
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots()  # Explicitly set figure size
 
-    if df[x_axis].dtype == 'object' or df[x_axis].dtype == 'str':
-        # bar plot of the categorical variable
+    if df[x_axis].dtype in ['object', 'str']:
         x = np.arange(len(df[x_axis]))
         width = 0.35
-
-        ax.bar(x, df[y_train_time], width, label='Training time', color='r', alpha=0.5)
+        ax.bar(x, df["mean_fit_time"], width, label='Training time', color='r', alpha=0.5)
         ax.set_xticks(x)
         ax.set_xticklabels(df[x_axis], rotation=45, ha='right')
     else:
-        ax.plot(df[x_axis], df[y_train_time], label='Training time', linestyle='--', marker='o', color='r')
+        ax.plot(df[x_axis], df["mean_fit_time"], label='Training time', linestyle='--', marker='o', color='r', markersize=4)
 
-    plt.xlabel(x_axis)
-    plt.ylabel('Training time (s)')
-    plt.title(title)
-    plt.legend(loc='best')
-    return plt
-
+    ax.set_xlabel(x_axis)
+    ax.set_ylabel('Training time (s)')
+    ax.set_title(title)
+    ax.legend(loc='best', frameon=True, fancybox=False, edgecolor='black') 
+    plt.tight_layout()
+    return fig, ax

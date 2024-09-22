@@ -17,18 +17,13 @@ dataset:
     - 'euribor3m'
     - 'nr.employed'
   cat_features:
-    - 'job'
-    - 'marital'
     - 'education'
-    - 'day_of_week'
     - 'default'
-    - 'housing'
-    - 'loan'
     - 'contact'
-    - 'month'
     - 'poutcome'
     - 'pdays'
   random_state: 17
+  is_smote: True
 
 models:
   knn:
@@ -41,6 +36,8 @@ models:
   nn:
     param_grid:
       'hidden_layer_sizes': [ [5], [10], [15], [20], [25], [30], [35], [40], [45], [50], [32, 5], [32, 10], [32, 15], [32, 20], [32, 25], [32, 30], [32, 32]]
+      'learning_rate': ['adaptive']
+      'learning_rate_init': [1.0, 0.5, 0.1, 0.08, 0.06, 0.04, 0.02, 0.01, .005, .001, .0005, .0001]
   boosting:
     param_grid:
       'n_estimators': [50, 100, 150, 200]
