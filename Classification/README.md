@@ -1,10 +1,23 @@
-# Content
-- 
 
 # To Start
 1. Clone the repository
 2. Download the datasets from the links provided below in [Dataset](#Dataset) section
 3. Create the environment ```conda env create -f environment.yml```
+4. Set the working directory to the root of the repository in the terminal, which is the directory containing the `main_dateset1.py` and `main_dateset2.py`.
+4. Run the code. The input parameters are saved in the `dataset1_config` and `dataset_config` folders. You can change the parameters in the file to run the code with different parameters.
+To run the model, use the following command:
+```python
+python main_dataset1.py -c {config file path} -m {model_name}
+```
+The model name can be one of the following:
+- nn: Neural Network
+- svm: Support Vector Machine
+- knn: K-Nearest Neighbors
+- boosting: Gradient Boosting Trees
+One example of the command is:
+```python
+python main_dataset2.py -c dataset2_config/config.yaml -m nn
+```
 
 # Dataset
 
