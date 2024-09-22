@@ -2,24 +2,22 @@ cross_validation:
   n_splits: 5
 dataset:
   embedding_config:
-    max_features: 768
-  embedding_method: tfidf
+    max_seq_length: 500
+    model_name: paraphrase-MiniLM-L3-v2
+  embedding_method: transformer
   file_path: data/dataset2/raw/Youtube-Spam-Dataset.csv
   name: nlp
-  output_dir: data/dataset2/processed/tfidf
+  output_dir: data/dataset2/processed/transformer_384
   rerun: false
-model_output_dir: results/dataset2/model_outputs
+model_output_dir: results/dataset2/model_outputs_bert_384
 models:
   boosting:
     param_grid:
       max_depth:
-      - 10
-      - 15
-      - 20
-      - 25
-      - 30
-      - 35
-      - 40
+      - 3
+      - 5
+      - 7
+      - 9
       n_estimators:
       - 50
       - 100
@@ -45,22 +43,18 @@ models:
   nn:
     param_grid:
       hidden_layer_sizes:
-      - - 50
+      - - 20
+      - - 40
+      - - 60
+      - - 80
       - - 100
-      - - 150
-      - - 200
-      - - 250
-      - - 300
-      - - 350
-      - - 400
-      - - 450
-      - - 500
-      - - 250
-        - 50
-      - - 250
-        - 100
-      - - 250
-        - 150
+      - - 120
+      - - 60
+        - 20
+      - - 60
+        - 40
+      - - 60
+        - 60
       learning_rate:
       - adaptive
       learning_rate_init:

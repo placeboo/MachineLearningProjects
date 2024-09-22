@@ -3,7 +3,7 @@ output:
 dataset:
   name: 'bank_campaign'
   file_path: 'data/dataset1/raw/Bank_Campaign.csv'
-  output_dir: 'data/dataset1/processed'
+  output_dir: 'data/dataset1/processed_feature_reduce'
   target_column: 'subscribed'
   rerun: False
   num_features:
@@ -18,7 +18,6 @@ dataset:
     - 'nr.employed'
   cat_features:
     - 'education'
-    - 'day_of_week'
     - 'default'
     - 'contact'
     - 'poutcome'
@@ -28,21 +27,21 @@ dataset:
 models:
   knn:
     param_grid:
-      'n_neighbors': [20]
+      'n_neighbors': [5]
   svm:
     param_grid:
       'kernel': ['rbf']
       'gamma': [ 0.1]
   nn:
     param_grid:
-      'hidden_layer_sizes': [ [32, 5]]
+      'hidden_layer_sizes': [ [32, 25]]
       'learning_rate': ['adaptive']
-      'learning_rate_init': [0.001]
+      'learning_rate_init': [0.05]
   boosting:
     param_grid:
-      'n_estimators': [200]
-      'max_depth': [3]
-      'subsample': [0.7]
+      'n_estimators': [50]
+      'max_depth': [5]
+      'subsample': [1]
 cross_validation:
   n_splits: 5
 

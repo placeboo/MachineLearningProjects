@@ -5,7 +5,7 @@ dataset:
   embedding_method: 'tfidf'
   rerun: False
   embedding_config:
-    max_features: 500
+    max_features: 768
 
 models:
   knn:

@@ -55,7 +55,8 @@ class Classifier:
             = learning_curve(self.best_model, self.X_train, self.y_train, \
                              train_sizes=[0.01, 0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 1], \
                              cv=self.cv, n_jobs=-3, random_state=self.random_state, \
-                             verbose=3, return_times=True, scoring='f1')
+                             verbose=3, return_times=True, scoring='accuracy')
+
         learning_curve_data = {
             'train_sizes': train_sizes.tolist(),
             'train_scores': train_scores.tolist(),
@@ -79,10 +80,10 @@ class Classifier:
             model.partial_fit(X_train_split, y_train_split, classes=[-1, 1])
             y_train_pred = model.predict(X_train_split)
             y_val_pred = model.predict(X_val)
-            train_score = f1_score(y_train_split, y_train_pred)
-            val_score = f1_score(y_val, y_val_pred)
-            # train_score = model.score(X_train_split, y_train_split)
-            # val_score = model.score(X_val, y_val)
+            # train_score = f1_score(y_train_split, y_train_pred)
+            # val_score = f1_score(y_val, y_val_pred)
+            train_score = model.score(X_train_split, y_train_split)
+            val_score = model.score(X_val, y_val)
             train_scores.append(train_score)
             val_scores.append(val_score)
 

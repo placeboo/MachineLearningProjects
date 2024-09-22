@@ -3,7 +3,7 @@ dataset:
   file_path: 'data/dataset2/raw/Youtube-Spam-Dataset.csv'
   output_dir: 'data/dataset2/processed/transformer_500'
   embedding_method: 'transformer'
-  rerun: False
+  rerun: True
   embedding_config:
     max_seq_length: 500
 

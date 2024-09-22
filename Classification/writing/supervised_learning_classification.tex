@@ -10,6 +10,8 @@
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{subcaption}
+\usepackage{hyperref}
+\usepackage{multirow}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
@@ -70,26 +72,38 @@ Classification, NLP
 \end{IEEEkeywords}
 
 \section{Introduction}
-In this paper, I will implement several binary state of art classification on two types of datasets. 
+In this paper, I will implement several binary state of art classification on two types of datasets: Bank Markeking Campaign Suscription in Sec. \ref{sec:bank} and Youtube comment spam dectection in Sec. \ref{sec:youtube}
 
-\section{Dataset 1: Bank Marketing Campaign Subscription}
+\section{Dataset 1: Bank Marketing Campaign Subscription \label{sec:bank}}
 In the following sections, I will describe the dataset, preprocessing steps, implemented models, hyperparameter tuning, results analysis, and sensitivity analysis by feature reduction.
 
-\subsection{Data Description}
+\subsection{Data Description and Rationale}
 The dataset, obtained from Kaggle \cite{b1}, contains records of marketing phone calls from a Portuguese banking institution. The calls were conducted to persuade bank customers to subscribe to a specific financial product. For each call, customers indicated their willingness to subscribe, serving as an indicator of campaign success.
 
-This dataset is interesting for several reasons:
+This dataset presents several interesting characteristics that make it a compelling choice for my analysis:
 \begin{itemize}
-    \item It presents a binary classification problem with a relatively large sample size ($N=41,188$).
-    \item The data is imbalanced (yes: $11.3\%$, no: $88.7\%$).
-    \item It contains both numerical and categorical features, requiring diverse preprocessing techniques.
-    \item As real-world data, it has practical applications in industry.
+    \item Binary Classification Problem: The dataset presents a clear binary outcome (subscription: yes/no), allowing for straightforward evaluation of classification algorithms.
+    \item Large Sample Size: With 41,188 records, the dataset provides ample data for training and testing, enabling more robust model evaluation.
+    \item Class Imbalance: The dataset is imbalanced (yes: $11.3\%$, no: $88.7\%$), presenting an additional challenge for model training and evaluation.
+    \item Diverse Feature Types: The dataset contains both numerical and categorical features, requiring the application of various preprocessing techniques.
+    \item Real-World Application: As real-world data from the banking industry, this dataset has practical applications and relevance to current business challenges.
 \end{itemize}
 
 The dataset comprises 41,188 phone call records with 20 features, covering multiple aspects of the customers, such as demographics (e.g., age, job, education), previous campaign contact and outcome, and socio-economic context. The target variable is the campaign outcome: 'yes' or 'no' to subscribing to the product.
 
-My objective is to predict whether a customer will subscribe to the product based on the available information. I will implement several binary classification models to predict the campaign outcome and compare their performance.
-
+\subsection{Hypothesis and Analysis Objectives}
+Based on the characteristics of this dataset, I hypothesize that:
+\begin{itemize}
+    \item Certain demographic features (such as age and job) will be strong predictors of subscription likelihood.
+    \item The class imbalance may pose challenges for some algorithms, potentially requiring techniques like class weighting or resampling.
+\end{itemize}
+My analysis will focus on:
+\begin{itemize}
+    \item Implementing and comparing the performance of K-Nearest Neighbors (KNN), Support Vector Machine (SVM), Neural Network (NN), and Gradient Boosting Tree (GBT) on this binary classification task.
+    \item Evaluating the impact of various preprocessing techniques, particularly on handling the mixed feature types and class imbalance.
+    \item Analyzing the learning curves and model complexity to understand how each algorithm copes with this large, imbalanced dataset.
+    \item Investigating feature importance and performing sensitivity analysis through feature reduction.
+\end{itemize}
 \subsection{Data Preprocessing and Exploration}
 Of the 20 features, 10 are numerical and 10 are categorical. The numerical feature \textit{pdays} (number of days since the client was last contacted from a previous campaign) has a value of 999 for clients not previously contacted, which constitutes the majority. Considering its importance, I converted it into a categorical variable with the following categories: \textit{NoContact, 0-2, 3-7, 8-14, $>14$}.
 
@@ -124,17 +138,17 @@ After the feature preprocess, the dataset contains 67 features. To reduce the fe
 
 For model training and testing, I split the dataset into a training set and a testing set with a 4:1 ratio. For hyperparameter tuning, I employed five-fold cross-validation on the training set.
 
-\subsection{Model Implementation and Hyperparameter Tuning}
+\subsection{Model Implementation and Hyperparameter Tuning \label{sec:data1-hyperparameter}}
 I implemented four models using the scikit-learn library: K-Nearest Neighbors (KNN), Support Vector Machine (SVM), Neural Network (NN), and Gradient Boosting Tree (GBT). For all models, I used 5-fold cross-validation for hyperparameter tuning. Due to limited computational resources on my local desktop, I had to balance the breadth of hyperparameter exploration with computational feasibility.
 
-\subsubsection{KNN}
+\subsubsection{KNN \label{sec:knn}}
 I used \verb|KNeighborsClassifier| for KNN implementation. To study the effect of the number of neighbors, I explored the range of $K = \{3, 5, 10, 15, 20, 25, 30\}$ using Euclidean distance. This range was chosen to cover both small and large neighborhood sizes without prior knowledge of the optimal value. I also explored two weight options:
 \begin{itemize}
     \item Uniform: All neighbors have equal weight.
     \item Distance: Neighbors are weighted by the inverse of their distance, giving closer neighbors greater influence.
 \end{itemize}
 
-\subsubsection{SVM}
+\subsubsection{SVM \label{sec:svm}}
 I used \verb|sklearn.svm.SVC| for SVM implementation. I explored the following hyperparameters:
 \begin{itemize}
     \item Kernel: 'poly', 'rbf', 'sigmoid'
@@ -150,7 +164,7 @@ These kernels are widely used in practice:
 
 The $\gamma$ parameter contral the spread of the influence of each point. Lower values leads to a smoother decision boundary, while higher values can lead to overfitting.
 
-\subsubsection{NN}
+\subsubsection{NN \label{sec:nn}}
 I used MLPClassifier for NN implementation. With 67 total features, I explored various hidden layer configurations:
 \begin{itemize}
     \item One hidden layer: 5, 10, 15, 20, 25, 30, 35, 40, 45, 50 neurons
@@ -161,7 +175,7 @@ I used 'adam' as the optimization algorithm, 'relu' activation for hidden layers
 
 Given the importance of learning rate in neural network training, I further explored adaptive learning rates with different initial values: 1.0, 0.5, 0.1, 0.08, 0.06, 0.04, 0.02, 0.01, 0.005, 0.001, 0.0005, 0.0001.
 
-\subsubsection{GBT}
+\subsubsection{GBT \label{sec:gbt}}
 I used \verb|GradientBoostingClassifier| for GBT implementation. I explored the following hyperparameters:
 \begin{itemize}
     \item Number of estimators (boosting stages): 50, 100, 150, 200
@@ -174,40 +188,552 @@ These hyperparameters were tuned to balance model complexity and performance. Th
 I also leveraged the feature importance from GBT to perform feature reduction, which will be discussed in a later section. This approach capitalizes on the boosting tree's ability to learn which combination of features significantly reduces the fitting error.
 
 \subsection{Results and Analysis}
-
+To verify my hypothese, I have conducted three cases of analysis:
+\begin{enumerate}
+    \item Full features without oversampling;
+    \item Feature reduction with GBT;
+    \item Oversampling the minority class.
+\end{enumerate}
+In each cases, I have conducted hyperparameter tuning with 5-fold cross-validation. Due to the labeling imbalance, I have used F1-score as the primary metrics for model selection. During the training process, I have also monitored the learning curve to understand the model's performance with different dataset sizes, while except for NN, I monitored the performance with the number of iterations. To understand the model complexity, I have also monitored the performance with different hyperparameters.
+\subsubsection{Case 1: Full features without oversampling}
+In the first case, I trained the four different models (KNN, SVM, NN, GBT) on the full feature set without oversampling the minority class. With respective to hyperparameters listed in Sec. \ref{sec:data1-hyperparameter}, the best hyperparameter for each model in selected with highest F1-score.
 
 \begin{table}[htbp]
-\caption{Table Type Styles}
+\caption{Best model selection in Case 1. It displays the training and validation F1-score, and the best hyperparameters for each model.}
 \begin{center}
 \begin{tabular}{|c|c|c|c|}
 \hline
-\textbf{Table}&\multicolumn{3}{|c|}{\textbf{Table Column Head}} \\
-\cline{2-4} 
-\textbf{Head} & \textbf{\textit{Table column subhead}}& \textbf{\textit{Subhead}}& \textbf{\textit{Subhead}} \\
+\textbf{Model} & {Hyperparameters} & {Training} & {Validation}\\
 \hline
-copy& More table copy$^{\mathrm{a}}$& &  \\
+KNN & $K=5$, uniform & 0.636 & 0.477  \\
 \hline
-\multicolumn{4}{l}{$^{\mathrm{a}}$Sample of a Table footnote.}
+SVM & kernel=rbf, $\gamma=0.1$& 0.667 & 0.524 \\
+\hline
+NN & [32, 25], adaptive, 0.05 & 0.611 & 0.567 \\
+\hline
+GBT & max depth 5, estiamtor 50, subsample 1 & 0.671 & 0.602 \\
+\hline 
 \end{tabular}
-\label{tab1}
+\label{tab:case1-best-model}
 \end{center}
 \end{table}
 
-% \begin{figure}[htbp]
-% \centerline{\includegraphics{fig1.png}}
-% \caption{Example of a figure caption.}
-% \label{fig}
-% \end{figure}
+
+\begin{figure*}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1/knn_lc_bank_campaign.png}
+        \caption{KNN}
+        \label{fig:knn_lc_dataset1}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1/svm_lc_bank_campaign.png}
+        \caption{SVM}
+        \label{fig: svm_lc_dataset1}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1_2/nn_lc_bank_campaign.png}
+        \caption{NN}
+        \label{fig: nn_lc_dataset1}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1/boosting_lc_bank_campaign.png}
+        \caption{GBT}
+        \label{fig: boosting_lc_dataset1}
+    \end{subfigure}
+    \caption{Learning curves for KNN, SVM, NN, GBT in Case 1. The x-axis represents the number of samples, and the y-axis represents the F1-score.}
+    \label{fig:lc_dataset1}
+\end{figure*}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1/knn_cc_n_neighbors_bank_campaign.png}
+        \caption{KNN: F1 score vs. neighbors}
+        \label{fig:knn_neighborhood_cc_dataset1}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1_2/knn_cc_weights_bank_campaign.png}
+        \caption{KNN: F1 score vs. weights}
+        \label{fig: knn_weights_cc_dataset1}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1/knn_training_time_neighbor_bank_campaign.png}
+        \caption{KNN: Training time vs. neighbors}
+        \label{fig: knn_training_time_cc_dataset1}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1/knn_training_time_weights_bank_campaign.png}
+        \caption{KNN: Training time vs. weights}
+        \label{fig: knn_training_time_weights_cc_dataset1}
+    \end{subfigure}
+    \caption{KNN hyperparameter tuning in Case 1. The x-axis represents the hyperparameter values, and the y-axis represents the F1-score or training time.}
+    \label{fig:knn_cc_dataset1}
+\end{figure}
+
+% SVM
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1/svm_cc_kernel_bank_campaign.png}
+        \caption{SVM: F1 score vs. kernel}
+        \label{fig:svm_kernel_cc_dataset1}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1/svm_cc_gamma_bank_campaign.png}
+        \caption{SVM: F1 score vs. $\gamma$}
+        \label{fig: svm_gamma_cc_dataset1}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1/svm_training_time_kernel_bank_campaign.png}
+        \caption{SVM: Training time vs. kernel}
+        \label{fig: svm_training_time_cc_dataset1}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1/svm_training_time_gamma_bank_campaign.png}
+        \caption{SVM: Training time vs. $\gamma$}
+        \label{fig: svm_training_time_gamma_cc_dataset1}
+    \end{subfigure}
+    \caption{SVM hyperparameter tuning in Case 1. The x-axis represents the hyperparameter values, and the y-axis represents the F1-score or training time.}
+    \label{fig:svm_cc_dataset1}
+\end{figure}
+
+% NN
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1/nn_hidden_layer_sizes_bank_campaign.png}
+        \caption{NN: F1 score vs. hidden layer sizes}
+        \label{fig:nn_hidden_layer_sizes_cc_dataset1}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1_2/nn_cc_learning_rate_init_bank_campaign.png}
+        \caption{NN: F1 score vs. learning rate}
+        \label{fig: nn_learning_rate_cc_dataset1}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1/nn_training_time_hidden_layer_sizes_bank_campaign.png}
+        \caption{NN: Training time vs. hidden layer sizes}
+        \label{fig: nn_training_time_cc_dataset1}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1_2/nn_training_time_learning_rate_init_bank_campaign.png}
+        \caption{NN: Training time vs. learning rate}
+        \label{fig: nn_training_time_learning_rate_cc_dataset1}
+    \end{subfigure}
+    \caption{NN hyperparameter tuning in Case 1. The x-axis represents the hyperparameter values, and the y-axis represents the F1-score or training time.}
+    \label{fig:nn_cc_dataset1}
+\end{figure}
+
+% GBT
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1/boosting_cc_n_estimators_bank_campaign.png}
+        \caption{GBT: F1 score vs. n estimators}
+        \label{fig:boosting_n_estimators_cc_dataset1}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1/boosting_cc_max_depth_bank_campaign.png}
+        \caption{GBT: F1 score vs. max depth}
+        \label{fig: boosting_max_depth_cc_dataset1}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1/boosting_training_time_n_estimators_bank_campaign.png}
+        \caption{GBT: Training time vs. n estimators}
+        \label{fig: boosting_training_time_cc_dataset1}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset1/boosting_training_time_max_depth_bank_campaign.png}
+        \caption{GBT: Training time vs. max depth}
+        \label{fig: boosting_training_time_max_depth_cc_dataset1}
+    \end{subfigure} 
+    \caption{GBT hyperparameter tuning in Case 1. The x-axis represents the hyperparameter values, and the y-axis represents the F1-score or training time.}
+    \label{fig:boosting_cc_dataset1}
+\end{figure}
+
+\subsubsection{Case 2: Feature reduction with GBT}
+\begin{table}[htbp]
+    \caption{Feature Importance}
+    \begin{center}
+    \begin{tabular}{|l|r|}
+    \hline
+    \textbf{Feature} & \textbf{Importance} \\
+    \hline
+    duration & 0.488 \\
+    \hline
+    nr.employed & 0.252 \\
+    \hline
+    euribor3m & 0.086 \\
+    \hline
+    poutcome\_success & 0.032 \\
+    \hline
+    \end{tabular}
+    \caption{Feature importance from GBT in Case 2. The table shows the top four features with the highest importance.}
+    \label{tab:feature_importance}
+    \end{center}
+\end{table}
+\subsubsection{Case 3: Oversampling the minority class}
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|l|c|c|c|c|}
+    \hline
+    Case No & Model & Accuracy & Precision & Recall & F1 \\
+    \hline
+    \multirow{4}{*}{1} 
+    & KNN & 0.902 & 0.609 & 0.419 & 0.497 \\
+    & SVM & 0.915 & 0.658 & 0.494 & 0.564 \\
+    & NN & 0.921 & 0.649 & 0.643 & 0.646 \\
+    & \textbf{GBT} & \textbf{0.923} & \textbf{0.679} & \textbf{0.591} & \textbf{0.632} \\
+    \hline
+    \multirow{4}{*}{2}
+    & KNN & 0.906 & 0.598 & 0.487 & 0.537 \\
+    & SVM & 0.915 & \textbf{0.686} & 0.437 & 0.534 \\
+    & NN & 0.920 & 0.645 & 0.629 & 0.637 \\
+    & \textbf{GBT} & \textbf{0.923} & 0.682 & \textbf{0.587} & \textbf{0.631} \\
+    \hline
+    \multirow{4}{*}{3}
+    & KNN & 0.898 & 0.564 & 0.478 & 0.517 \\
+    & SVM & 0.911 & 0.680 & 0.421 & 0.520 \\
+    & NN & 0.912 & 0.657 & 0.484 & 0.557 \\
+    & \textbf{GBT} & \textbf{0.918} & \textbf{0.671} & \textbf{0.554} & \textbf{0.607} \\
+    \hline
+    \end{tabular}
+    \caption{Comparison of Model Performance Metrics on Testing Set. The table shows the accuracy, precision, recall, and F1 score for each model in three cases.}
+    \label{tab:model-performance-dataset1}
+\end{table}
+
+\section{Dataset 2: YouTube Comments Spam Detection \label{sec:youtube}}
+\subsection{Data Description and Rationale}
+The YouTube Comments Spam dataset is a public collection comprising 1,956 real comments from five different videos that were among the 10 most viewed during the collection period \cite{b2}. This dataset presents an interesting binary classification problem in the domain of natural language processing, with several characteristics that make it a compelling choice for my analysis:
+\begin{itemize}
+    \item Balanced Dataset: The dataset contains 951 spam comments and 1,005 non-spam comments, providing a nearly balanced distribution of classes. This balance is crucial for training unbiased models and evaluating their performance accurately.
+    \item Text Classification Challenge: Unlike the Bank Marketing dataset, this problem requires text processing techniques, allowing me to explore a different aspect of machine learning and compare model performances across diverse data types.
+    \item Moderate Sample Size: With 1,956 samples, the dataset is large enough to be meaningful yet small enough to present challenges in model generalization, making it an excellent test for the algorithms' ability to learn from limited data.
+    \item Real-World Application: Spam detection in online platforms is a prevalent issue, making this dataset relevant to current technological challenges.
+    \item Unique User Behavior Patterns: An intriguing aspect of this dataset is that users tend to be consistent in their behavior - they either post all spam or all non-spam comments. This pattern, visualized in Figure \ref{fig:spam-distribution}, adds an interesting dimension to my analysis and may influence my feature engineering and model selection processes.
+\end{itemize}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.5\textwidth]{figs/spam-spam-distribution.png}
+\caption{Heatmap showing the spam likelihood for the top 25 authors by comment frequency. The y-axis represents the video names, and the x-axis represents the authors. The color intensity indicates the likelihood of spam, with a color gradient from yellow (low likelihood) to red (high likelihood).}
+\label{fig:spam-distribution}
+\end{figure}
+\subsection{Hypothesis and Analysis Objectives}
+Based on the characteristics of this dataset, I hypothesize that:
+\begin{itemize}
+    \item The consistency in user behavior (all spam or all non-spam) might allow for effective user-based features.
+    \item Text embedding size may impact the model performance, with larger embeddings potentially capturing more nuanced information but requiring more data to train effectively.
+    \item Different classification algorithms may perform variably due to the textual nature of the data, with some potentially struggling with the high-dimensional feature space created by text data.
+\end{itemize}
+
+My analysis will focus on:
+\begin{itemize}
+    \item Comparing the performance of Neural Networks, Support Vector Machines, and k-Nearest Neighbors, and Gradient Boosting Tree on this text classification task.
+    \item Evaluating the impact of different text preprocessing techniques on model performance.
+    \item Analyzing the learning curves to understand how each algorithm copes with the limited dataset size.
+    \item Investigating the effectiveness of various feature engineering approaches for text data.
+\end{itemize}
+
+Through this analysis, I aim to gain insights into the strengths and weaknesses of each algorithm when applied to text classification tasks, and to understand the unique challenges posed by spam detection in online platforms.
+\subsection{Data Preprocessing}
+
+The raw data contained six columns: comment ID, author name, comment date, video name, comment content, and the target variable indicating whether the comment is spam or not. To prepare this textual data for my machine learning models, I implemented a comprehensive preprocessing pipeline:
+
+\textit{Feature Combination}: I combined the \verb|AUTHOR|, \verb|VIDEO_NAME|, and \verb|CONTENT| columns into a single \verb|combined_text| feature. This approach allows my models to consider all available textual information.
+
+\textit{Text Cleaning}: I applied several standard NLP cleaning techniques to the combined text:
+\begin{itemize}
+\item Converting all text to lowercase to ensure consistency
+\item Removing non-alphabetic characters and punctuation
+\item Tokenizing the text into individual words
+\item Removing common English stopwords to reduce noise in the data
+\end{itemize}
+
+\textit{Text Vectorization}: To convert the cleaned text into a format suitable for my machine learning models, I employed two different embedding methods:
+
+\subsubsection{Embedding Methods}
+TF-IDF Vectorization
+
+Term Frequency-Inverse Document Frequency (TF-IDF) is a statistical measure used to evaluate the importance of a word to a document in a collection or corpus. I used scikit-learn's TfidfVectorizer with a maximum of 768 features to create sparse vector representations of my documents.
+\subsubsection{Transformer-based Embedding}
+For a more advanced representation of the text data, I utilized different pretrained embedding models from the sentence-transformers library. Specifically, I employed 'distilbert-base-nli-mean-tokens' and 'paraphrase-MiniLM-L3-v2' to generate dense vector representations of the documents. The DistilBERT-based model ('distilbert-base-nli-mean-tokens') is a distilled version of BERT, retaining 97\% of BERT's language understanding capabilities while being 40\% smaller and 60\% faster. This model produces embeddings with 768 dimensions, capturing rich semantic information from the input text. The MiniLM-based model ('paraphrase-MiniLM-L3-v2') uses a deep self-attention mechanism to learn language representations, generating more compact embeddings with 384 dimensions while still maintaining high performance on various NLP tasks. 
+
+After preprocessing and embedding, I split my dataset into training and testing sets using an 80-20 split ratio. This allows us to train my models on a substantial portion of the data while retaining a significant amount for testing to ensure robust evaluation of my models' performance.
+
+\subsection{Model Implementation and Hyperparameter Tuning}
+I implemented four classification algorithms on the preprocessed YouTube Comments Spam dataset: KNN, SVM, NN, and GBT. I have used the same sklearn framework and default hyperparameters as in Dataset 1, with the following hyperparameters for each model:
+\subsubsection{KNN}
+\begin{itemize}
+    \item Number of neighbors: 1, 2, 3, 4, 5, 10, 15, 20, 25, 30
+    \item Weights: uniform, distance
+\end{itemize}
+\subsubsection{SVM}
+\begin{itemize}
+    \item Kernel: 'linear', 'poly', 'rbf', 'sigmoid'
+    \item $\gamma$: scale, auto, 0.1, 0.01
+\end{itemize}
+\subsubsection{NN}
+With adaptive training rate, I explored the following hyperparameters:
+\begin{itemize}
+    \item One hidden layer: 50, 100, 150, 200, 250, 300, 350 neurons; Two hidden layers: [32, 5], [32, 10], [32, 15], [32, 20], [32, 25], [32, 30], [32, 32] neurons
+    \item Initial learning rate: 1.0, 0.5, 0.1, 0.08, 0.06, 0.04, 0.02, 0.01, 0.005, 0.001, 0.0005, 0.0001
+\end{itemize}
+\subsubsection{GBT}
+\begin{itemize}
+    \item Number of estimators: 50, 100, 150, 200, 250
+    \item Maximum tree depth: 10, 15, 20, 25, 30, 35, 40
+\end{itemize}
+Different from dataset 1, dataset 2 has relatively balanced classes, which allows me to use accuracy as the primary metric for model selection. To verify my hypothesis, I have conducted three cases of analysis:
+\begin{itemize}
+    \item Case 1: TF-IDF vectorization with 768 features;
+    \item Case 2: DistilBERT embeddings with 768 features;
+    \item Case 3: MiniLM-based embeddings with 384 features.
+\end{itemize}
+All three cases have undergone the same hyperparameter tuning process with 5-fold cross-validation.
+
+\subsection{Results and Analysis}
+
+\begin{table}[htbp]
+    \centering
+    \begin{tabular}{|c|l|l|c|c|}
+    \hline
+    Case No & Model & Hyperparameters & Training & Validation \\
+    \hline
+    \multirow{4}{*}{1} 
+    & KNN & K=4, distance & 0.987 & 0.827 \\
+    & SVM & kernel=rbf, $\gamma=scale$ & 0.974 & 0.909 \\
+    & NN & [250, 100], 0.01 & 0.953 & 0.889 \\
+    & GBT & max depth 10, estimator 50 & 0.982 & 0.900\\
+    \hline
+    \multirow{4}{*}{2}
+    & KNN & K=10, distance & 1.000 & 0.885 \\
+    & SVM & kernel=rbf, $\gamma=0.01$ & 0.998 & 0.916 \\
+    & NN & [100], 0.001 & 0.960 & 0.938 \\
+    & GBT & max depth 3, estimator 250 & 1.000 & 0.910 \\
+    \hline
+    \multirow{4}{*}{3}
+    & KNN & K=10, distance & 1.000& 0.897 \\
+    & SVM & kernel=rbf, $\gamma=scale$ & 0.977 & 0.934 \\
+    & NN & [100], 0.06 & 0.978 & 0.932 \\
+    & GBT & max depth 5, estimator 200 & 1.000 & 0.925 \\
+    \hline
+    \end{tabular}
+    \caption{Best model selection among the four models in each case. The table displays the training and validation accuracy, along with the best hyperparameters for each model.}
+    \label{tab:model-comparison}
+\end{table}
+
+% insert learning curves
+\begin{figure*}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/knn_lc_nlp.png}
+        \caption{KNN}
+        \label{fig:knn_lc_dataset2}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/svm_lc_nlp.png}
+        \caption{SVM}
+        \label{fig: svm_lc_dataset2}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/nn_lc_nlp.png}
+        \caption{NN}
+        \label{fig: nn_lc_dataset2}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/boosting_lc_nlp.png}
+        \caption{GBT}
+        \label{fig: boosting_lc_dataset2}
+    \end{subfigure}
+    \caption{Learning curves for KNN, SVM, NN, GBT in Case 3. The x-axis represents the number of samples, and the y-axis represents the F1-score.}
+    \label{fig:lc_dataset2}
+\end{figure*}
 
 
+% insert hyperparameter tuning
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/knn_cc_n_neighbors_nlp.png}
+        \caption{KNN: Accuracy vs. neighbors}
+        \label{fig:knn_neighborhood_cc_dataset2}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/knn_cc_weights_nlp.png}
+        \caption{KNN: Accuracy vs. weights}
+        \label{fig: knn_weights_cc_dataset2}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/knn_training_time_neighbor_nlp.png}
+        \caption{KNN: Training time vs. neighbors}
+        \label{fig: knn_training_time_cc_dataset2}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/knn_training_time_weights_nlp.png}
+        \caption{KNN: Training time vs. weights}
+        \label{fig: knn_training_time_weights_cc_dataset2}
+    \end{subfigure}
+    \caption{KNN hyperparameter tuning in Case 3. The x-axis represents the hyperparameter values, and the y-axis represents the accuracy or training time.}
+    \label{fig:knn_cc_dataset2}
+\end{figure}
+
+% svm
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/svm_cc_kernel_nlp.png}
+        \caption{SVM: Accuracy vs. kernel}
+        \label{fig:svm_kernel_cc_dataset2}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/svm_cc_gamma_nlp.png}
+        \caption{SVM: Accuracy vs. $\gamma$}
+        \label{fig: svm_gamma_cc_dataset2}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/svm_training_time_kernel_nlp.png}
+        \caption{SVM: Training time vs. kernel}
+        \label{fig: svm_training_time_cc_dataset2}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/svm_training_time_gamma_nlp.png}
+        \caption{SVM: Training time vs. $\gamma$}
+        \label{fig: svm_training_time_gamma_cc_dataset2}
+    \end{subfigure}
+    \caption{SVM hyperparameter tuning in Case 3. The x-axis represents the hyperparameter values, and the y-axis represents the accuracy or training time.}
+    \label{fig:svm_cc_dataset2}
+\end{figure}
+
+% nn
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/nn_hidden_layer_sizes_nlp.png}
+        \caption{NN: Accuracy vs. hidden layer sizes}
+        \label{fig:nn_hidden_layer_sizes_cc_dataset2}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/nn_cc_learning_rate_init_nlp.png}
+        \caption{NN: Accuracy vs. learning rate}
+        \label{fig: nn_learning_rate_cc_dataset2}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/nn_training_time_hidden_layer_sizes_nlp.png}
+        \caption{NN: Training time vs. hidden layer sizes}
+        \label{fig: nn_training_time_cc_dataset2}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/nn_training_time_learning_rate_init_nlp.png}
+        \caption{NN: Training time vs. learning rate}
+        \label{fig: nn_training_time_learning_rate_cc_dataset2}
+    \end{subfigure}
+    \caption{NN hyperparameter tuning in Case 3. The x-axis represents the hyperparameter values, and the y-axis represents the accuracy or training time.}
+    \label{fig:nn_cc_dataset2}
+\end{figure}
+
+% gbt
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/boosting_cc_n_estimators_nlp.png}
+        \caption{GBT: Accuracy vs. n estimators}
+        \label{fig:boosting_n_estimators_cc_dataset2}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/boosting_cc_max_depth_nlp.png}
+        \caption{GBT: Accuracy vs. max depth}
+        \label{fig: boosting_max_depth_cc_dataset2}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/boosting_training_time_n_estimators_nlp.png}
+        \caption{GBT: Training time vs. n estimators}
+        \label{fig: boosting_training_time_cc_dataset2}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/boosting_training_time_max_depth_nlp.png}
+        \caption{GBT: Training time vs. max depth}
+        \label{fig: boosting_training_time_max_depth_cc_dataset2}
+    \end{subfigure} 
+    \caption{GBT hyperparameter tuning in Case 3. The x-axis represents the hyperparameter values, and the y-axis represents the accuracy or training time.}
+    \label{fig:boosting_cc_dataset2}
+\end{figure}
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|l|c|c|c|c|}
+    \hline
+    Case No & Model & Accuracy & Precision & Recall & F1 \\
+    \hline
+    \multirow{4}{*}{1} 
+    & KNN & 0.821 & 0.896 & 0.776 & 0.832 \\
+    & SVM & 0.882 & 0.968 & 0.821 & 0.888 \\
+    & NN & 0.880 & 0.896 & 0.892 & 0.894 \\
+    & \textbf{GBT} & \textbf{0.887} & \textbf{0.969} & 0.830 & \textbf{0.894} \\
+    \hline
+    \multirow{4}{*}{2}
+    & KNN & 0.892 & 0.933 & 0.874 & 0.903 \\
+    & \textbf{SVM} & \textbf{0.941} & \textbf{0.950} & \textbf{0.946} & \textbf{0.948} \\
+    & NN & 0.911 & 0.965 & 0.874 & 0.917 \\
+    & GBT & 0.908 & 0.947 & 0.888 & 0.917 \\
+    \hline
+    \multirow{4}{*}{3}
+    & KNN & 0.901 & 0.926 & 0.897 & 0.911 \\
+    & \textbf{SVM} & \textbf{0.941} & 0.976 & \textbf{0.919} & \textbf{0.947} \\
+    & NN & 0.926 & \textbf{0.990} & 0.879 & 0.931 \\
+    & GBT & 0.906 & 0.939 & 0.892 & 0.915 \\
+    \hline
+    \end{tabular}
+    \caption{Updated Comparison of Model Performance Metrics on Testing Set. The table shows the accuracy, precision, recall, and F1 score for each model in three cases.}
+    \label{tab:model-performance-dataset2}
+\end{table}
 
 \begin{thebibliography}{00}
 \bibitem{b1} Bank Marketing Campaign Subscription data source: https://www.kaggle.com/datasets/pankajbhowmik/bank-marketing-campaign-subscriptions
+\bibitem{b2} Youtube Comments Spam data source: https://www.kaggle.com/datasets/ahsenwaheed/youtube-comments-spam-dataset
 
 \end{thebibliography}
 
-\vspace{12pt}
-\color{red}
-IEEE conference templates contain guidance text for composing and formatting conference papers. Please ensure that all template text is removed from your conference paper prior to submission to the conference. Failure to remove the template text from your paper may result in your paper not being published.
 
 \end{document}
