@@ -12,17 +12,18 @@
 \usepackage{subcaption}
 \usepackage{hyperref}
 \usepackage{multirow}
+\usepackage{array}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
 
-\title{Implementation of Binary Classification\\
+\title{Comparative Analysis of Machine Learning Models for Bank Marketing and YouTube Spam Detection
 %{\footnotesize \textsuperscript{*}Note: Sub-titles are not captured for https://ieeexplore.ieee.org  and
 %should not be used}
 %\thanks{Identify applicable funding agency here. If none, delete this.}
 }
 
-\author{\IEEEauthorblockN{Jiaqi Yin}
+\author{\IEEEauthorblockN{Jiaqi Yin (jyin90)}
 %\IEEEauthorblockA{\textit{dept. name of organization (of Aff.)} \\
 %\textit{name of organization (of Aff.)}\\
 %City, Country \\
@@ -68,14 +69,13 @@
 %\end{abstract}
 
 \begin{IEEEkeywords}
-Classification, NLP
+Classification, NLP, Transformer,TF-IDF, KNN, SVM, NN, GBT, 
 \end{IEEEkeywords}
 
 \section{Introduction}
-In this paper, I will implement several binary state of art classification on two types of datasets: Bank Markeking Campaign Suscription in Sec. \ref{sec:bank} and Youtube comment spam dectection in Sec. \ref{sec:youtube}
+In this report, I implemented binary classification models  on two types of datasets: Bank Marketing Campaign Subscription in Sec. \ref{sec:bank} and YouTube comment spam detection in Sec. \ref{sec:youtube}. The first one focus on the tabular data with mixed feature types, while the second one focus on the text data. For each dataset, I conducted data preprocessing, model implementation, hyperparameter tuning, and model evaluation. The goal is to compare the performance of different classification algorithms and understand how they cope with different data types and characteristics.
 
 \section{Dataset 1: Bank Marketing Campaign Subscription \label{sec:bank}}
-In the following sections, I will describe the dataset, preprocessing steps, implemented models, hyperparameter tuning, results analysis, and sensitivity analysis by feature reduction.
 
 \subsection{Data Description and Rationale}
 The dataset, obtained from Kaggle \cite{b1}, contains records of marketing phone calls from a Portuguese banking institution. The calls were conducted to persuade bank customers to subscribe to a specific financial product. For each call, customers indicated their willingness to subscribe, serving as an indicator of campaign success.
@@ -102,12 +102,13 @@ My analysis will focus on:
     \item Implementing and comparing the performance of K-Nearest Neighbors (KNN), Support Vector Machine (SVM), Neural Network (NN), and Gradient Boosting Tree (GBT) on this binary classification task.
     \item Evaluating the impact of various preprocessing techniques, particularly on handling the mixed feature types and class imbalance.
     \item Analyzing the learning curves and model complexity to understand how each algorithm copes with this large, imbalanced dataset.
-    \item Investigating feature importance and performing sensitivity analysis through feature reduction.
+    \item Investigating feature importance and performing through feature reduction.
+    \item Leverage the minority oversampling technique for 'yes' group. 
 \end{itemize}
 \subsection{Data Preprocessing and Exploration}
 Of the 20 features, 10 are numerical and 10 are categorical. The numerical feature \textit{pdays} (number of days since the client was last contacted from a previous campaign) has a value of 999 for clients not previously contacted, which constitutes the majority. Considering its importance, I converted it into a categorical variable with the following categories: \textit{NoContact, 0-2, 3-7, 8-14, $>14$}.
 
-Numerical features contain some outliers that could distort the model, and most are skewed; see in Fig \ref{fig:features}. To improve performance, I implemented the following steps:
+Numerical features contain some outliers that could distort the model, and most are skewed; examples seen in Fig \ref{fig:features}. To improve performance, I implemented the following steps:
 \begin{enumerate}
     \item Clipped outliers using the IQR method with a 2.0 threshold.
     \item Standardized numerical features using StandardScaler.
@@ -134,12 +135,12 @@ Numerical features contain some outliers that could distort the model, and most 
 
 For categorical features, I applied one-hot encoding to convert them into numerical format. 
 
-After the feature preprocess, the dataset contains 67 features. To reduce the feature set, I implemented a feature importance analysis using the Gradient Boosting Tree model which is discussed in Section. 
+After the feature preprocess, the dataset contains 67 features. To reduce the feature set, I implemented a feature importance analysis using the Gradient Boosting Tree model which is discussed in Sec. \ref{sec: dataset1-feature-reduction}. 
 
-For model training and testing, I split the dataset into a training set and a testing set with a 4:1 ratio. For hyperparameter tuning, I employed five-fold cross-validation on the training set.
+For model training and testing, I split the dataset into a training set and a testing set with a 80:20 ratio. For hyperparameter tuning, I employed five-fold cross-validation on the training set.
 
 \subsection{Model Implementation and Hyperparameter Tuning \label{sec:data1-hyperparameter}}
-I implemented four models using the scikit-learn library: K-Nearest Neighbors (KNN), Support Vector Machine (SVM), Neural Network (NN), and Gradient Boosting Tree (GBT). For all models, I used 5-fold cross-validation for hyperparameter tuning. Due to limited computational resources on my local desktop, I had to balance the breadth of hyperparameter exploration with computational feasibility.
+I implemented four models using the scikit-learn library. Due to limited computational resources on my local desktop, I had to balance the breadth of hyperparameter exploration with computational feasibility.
 
 \subsubsection{KNN \label{sec:knn}}
 I used \verb|KNeighborsClassifier| for KNN implementation. To study the effect of the number of neighbors, I explored the range of $K = \{3, 5, 10, 15, 20, 25, 30\}$ using Euclidean distance. This range was chosen to cover both small and large neighborhood sizes without prior knowledge of the optimal value. I also explored two weight options:
@@ -162,16 +163,16 @@ These kernels are widely used in practice:
     \item Sigmoid: Can produce results similar to certain neural networks.
 \end{itemize}
 
-The $\gamma$ parameter contral the spread of the influence of each point. Lower values leads to a smoother decision boundary, while higher values can lead to overfitting.
+The $\gamma$ parameter control the spread of the influence of each point. Lower values leads to a smoother decision boundary, while higher values can lead to overfitting.
 
 \subsubsection{NN \label{sec:nn}}
-I used MLPClassifier for NN implementation. With 67 total features, I explored various hidden layer configurations:
+I used \verb|MLPClassifier| for NN implementation. With 67 total features, I explored various hidden layer configurations:
 \begin{itemize}
     \item One hidden layer: 5, 10, 15, 20, 25, 30, 35, 40, 45, 50 neurons
     \item Two hidden layers: [32, 5], [32, 10], [32, 15], [32, 20], [32, 25], [32, 30], [32, 32] neurons
 \end{itemize}
 
-I used 'adam' as the optimization algorithm, 'relu' activation for hidden layers, and 'sigmoid' activation for the output layer. The initial configuration used a constant learning rate of 0.001, batch size of 200, and maximum of 200 epochs. To prevent overfitting, I employed early stopping.
+I used \verb|adam| as the optimization algorithm, \verb|relu| activation for hidden layers. The initial configuration used a constant learning rate of 0.001, batch size of 200, and maximum of 200 epochs. To prevent overfitting, I employed early stopping if the learning metrics not improving after 10 iterations.
 
 Given the importance of learning rate in neural network training, I further explored adaptive learning rates with different initial values: 1.0, 0.5, 0.1, 0.08, 0.06, 0.04, 0.02, 0.01, 0.005, 0.001, 0.0005, 0.0001.
 
@@ -185,19 +186,20 @@ I used \verb|GradientBoostingClassifier| for GBT implementation. I explored the 
 
 These hyperparameters were tuned to balance model complexity and performance. The number of estimators and max depth affect the model's capacity to learn complex patterns, while the subsample ratio helps in reducing overfitting by introducing randomness in the training process.
 
-I also leveraged the feature importance from GBT to perform feature reduction, which will be discussed in a later section. This approach capitalizes on the boosting tree's ability to learn which combination of features significantly reduces the fitting error.
+To verify my hypotheses, I have conducted two cases of analysis:
+
+\begin{itemize}
+    \item Full features without oversampling;
+    \item Oversampling the minority class and reducing features.
+\end{itemize}
+
+In each cases, I have conducted hyperparameter tuning with 5-fold cross-validation. Due to the labeling imbalance, I have used F1-score as the primary metrics for model selection. During the training process, I have also monitored the learning curve to understand the model's performance with different dataset sizes, while except for NN, I monitored the performance with the number of epochs. To understand the model complexity, I have also monitored the performance with different hyperparameters.
 
 \subsection{Results and Analysis}
-To verify my hypothese, I have conducted three cases of analysis:
-\begin{enumerate}
-    \item Full features without oversampling;
-    \item Feature reduction with GBT;
-    \item Oversampling the minority class.
-\end{enumerate}
-In each cases, I have conducted hyperparameter tuning with 5-fold cross-validation. Due to the labeling imbalance, I have used F1-score as the primary metrics for model selection. During the training process, I have also monitored the learning curve to understand the model's performance with different dataset sizes, while except for NN, I monitored the performance with the number of iterations. To understand the model complexity, I have also monitored the performance with different hyperparameters.
-\subsubsection{Case 1: Full features without oversampling}
-In the first case, I trained the four different models (KNN, SVM, NN, GBT) on the full feature set without oversampling the minority class. With respective to hyperparameters listed in Sec. \ref{sec:data1-hyperparameter}, the best hyperparameter for each model in selected with highest F1-score.
 
+\subsubsection{Case 1: Full features without oversampling \label{sec:dataset1-case1}}
+
+In the first case, I trained the four different models (KNN, SVM, NN, GBT) on the full feature set without oversampling the minority class. With respective to hyperparameters listed in Sec. \ref{sec:data1-hyperparameter}, the best hyperparameter for each model in selected with highest F1-score, and the best model is showed in Tab. \ref{tab:case1-best-model}. The best model of KNN is with $K=5$ and uniform weight, SVM is with polynomial kernel and $\gamma=0.1$, NN is with two hidden layer of [32, 30] and constant learning rate (note that hyperparameters with adaptive learning with inital rate as 0.001 also yield the same validation F1-score), GBT is with max depth 7, 50 estimators, and subsample ratio 0.9.  Among those best models, GBT has the best validation F1-score, while KNN has the worst validation F1-score. It is because KNN is nonparametric model, which does not performance well in high dimension space. 
 \begin{table}[htbp]
 \caption{Best model selection in Case 1. It displays the training and validation F1-score, and the best hyperparameters for each model.}
 \begin{center}
@@ -205,21 +207,22 @@ In the first case, I trained the four different models (KNN, SVM, NN, GBT) on th
 \hline
 \textbf{Model} & {Hyperparameters} & {Training} & {Validation}\\
 \hline
-KNN & $K=5$, uniform & 0.636 & 0.477  \\
+KNN & \parbox{3cm}{$K=5$, uniform }& 0.636 & 0.477  \\
 \hline
-SVM & kernel=rbf, $\gamma=0.1$& 0.667 & 0.524 \\
+SVM & \parbox{3cm}{kernel=poly, $\gamma=0.1$} & 0.746 & 0.523 \\
 \hline
-NN & [32, 25], adaptive, 0.05 & 0.611 & 0.567 \\
+NN & \parbox{3cm}{[32, 30], lr=0.001} & 0.611 & 0.567 \\
 \hline
-GBT & max depth 5, estiamtor 50, subsample 1 & 0.671 & 0.602 \\
+GBT & \parbox{3cm}{max depth 7, estimator 50, subsample 0.9} & 0.781 & \textbf{0.595} \\
 \hline 
 \end{tabular}
 \label{tab:case1-best-model}
 \end{center}
 \end{table}
 
+The learning curve of the four best models is showed in Fig. \ref{fig:lc_dataset1}. Those curves illustrate how the model's error rate changes as the training set size increases. All four models' learning curves show that the error rate decreases as the training set size / epochs increase, indicating that the model benefits from model data. The training error rate is constantly lower than the validation error rate and the gap between them is large for each model, showing overfitting issue. However, for SVM and GBT, the training and validation error converge with increasing sample size indicates that the two model is making effective use of more data. The relative performance of the models (GBT $>$ NN $>$ SVM $>$ KNN) aligns with their ability to capture complex, non-linear relationships in high-dimensional data.
 
-\begin{figure*}[htbp]
+\begin{figure}[htbp]
     \centering
     \begin{subfigure}[b]{0.24\textwidth}
         \centering
@@ -245,10 +248,11 @@ GBT & max depth 5, estiamtor 50, subsample 1 & 0.671 & 0.602 \\
         \caption{GBT}
         \label{fig: boosting_lc_dataset1}
     \end{subfigure}
-    \caption{Learning curves for KNN, SVM, NN, GBT in Case 1. The x-axis represents the number of samples, and the y-axis represents the F1-score.}
+    \caption{Learning curves for KNN, SVM, NN, GBT in Case 1. The x-axis represents the number of samples, and the y-axis represents the error rate.}
     \label{fig:lc_dataset1}
-\end{figure*}
-
+\end{figure}
+Fig. \ref{fig:knn_cc_dataset1} shows KNN performance (F1-score) with different number of neighbors and weights. The F1 score generally decreases as the number of neighbors increases. There's a sharp drop in performance after 5 neighbors, followed by a more gradual decline, suggesting that the local patterns in data are more informative than broader trends for this dataset. Uniform weights slightly outperform distance-based weights, indicating that choice of weighting has limited impact on the performance. The training time increases with the number of neighbors, and the distance-based weights require more time to compute than uniform weights.
+Overall, the relatively low F1 scores (below 0.5) indicate that KNN may not be the most suitable algorithm for this complex, high-dimensional dataset. 
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[b]{0.24\textwidth}
@@ -279,7 +283,7 @@ GBT & max depth 5, estiamtor 50, subsample 1 & 0.671 & 0.602 \\
     \label{fig:knn_cc_dataset1}
 \end{figure}
 
-% SVM
+Fig. \ref{fig:svm_cc_dataset1} shows SVM F1-score with respect to different kernels and $\gamma$. The polynomial (degree = 3) kernel slightly outperforms RBF kernel, and both outperform the sigmoid kernel when $\gamma = 0.1$. This shows that the decision boundary is non-linear. For polynomial kernel, $\gamma$ as scale or 0.1 have better performance.  This suggests that a moderate influence of each training example is beneficial for this dataset, balancing between too localized (high gamma) and too broad (low gamma) impacts. However polynomial kernel takes the longest time to train. In the future, for quick implementation, I may consider using RBF kernel with $\gamma = scale$
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[b]{0.24\textwidth}
@@ -310,7 +314,7 @@ GBT & max depth 5, estiamtor 50, subsample 1 & 0.671 & 0.602 \\
     \label{fig:svm_cc_dataset1}
 \end{figure}
 
-% NN
+Fig.\ref{fig:nn_cc_dataset1} shows the NN performance with respect to hidden layer size and learning rate. With learning rate 0.001, the F1 score increases as the hidden layer size increases, while the relationship is not linear. It indicates that once the number of neurons reaches a certain threshold, the model's performance does not improve significantly. The training time increases with the number of neurons, indicating that larger networks require more computational resources. For learning rate, the performance is generally better with moderate learning rates (around 0.01). Very high learning rates (1.0, 0.5) lead to poor performance, likely missed the optimal weights in training, while very low learning rates (0.0001, 0.0005) result in slower convergence and suboptimal performance within the given training time. 
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[b]{0.24\textwidth}
@@ -337,11 +341,13 @@ GBT & max depth 5, estiamtor 50, subsample 1 & 0.671 & 0.602 \\
         \caption{NN: Training time vs. learning rate}
         \label{fig: nn_training_time_learning_rate_cc_dataset1}
     \end{subfigure}
-    \caption{NN hyperparameter tuning in Case 1. The x-axis represents the hyperparameter values, and the y-axis represents the F1-score or training time.}
+    \caption{NN hyperparameter tuning in Case 1. The x-axis represents the hyperparameter values, and the y-axis represents the F1-score or training time. Figure \ref{fig:nn_hidden_layer_sizes_cc_dataset1} has learning rate as 0.001, and Figure \ref{fig: nn_learning_rate_cc_dataset1} has hidden layer sizes as [32, 30].}
     \label{fig:nn_cc_dataset1}
 \end{figure}
 
 % GBT
+Fig. \ref{fig:boosting_cc_dataset1} shows the GBT performance with respect to the number of estimators and max depth. The training F1 score for both hyperparameters increases as the hyperparameter value increases, while the validation F1 score reaches a peak and then decreases. This indicates that the model is overfitting with higher values of these hyperparameters. With 50 estimators and max depth 7, the model achieves the best validation F1 score. This indicates a trade-off between model complexity and generalization ability. Deeper trees can capture more complex patterns in the data, but beyond a certain depth, they may start to overfit. Training time increases linearly with the number of estimators, which is expected as each additional estimator requires training another decision tree. The max depth parameter also affects training time, with deeper trees taking longer to train due to the increased number of splits that need to be evaluated.
+
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}[b]{0.24\textwidth}
@@ -368,13 +374,16 @@ GBT & max depth 5, estiamtor 50, subsample 1 & 0.671 & 0.602 \\
         \caption{GBT: Training time vs. max depth}
         \label{fig: boosting_training_time_max_depth_cc_dataset1}
     \end{subfigure} 
-    \caption{GBT hyperparameter tuning in Case 1. The x-axis represents the hyperparameter values, and the y-axis represents the F1-score or training time.}
+    \caption{GBT hyperparameter tuning in Case 1. The x-axis represents the hyperparameter values, and the y-axis represents the F1-score or training time. Fig \ref{fig: boosting_max_depth_cc_dataset1} has max depth as 7 and subsample ratio as 0.9. Fig \ref{fig: boosting_training_time_max_depth_cc_dataset1} has n estimators as 50 and subsample ratio as 0.9.}
     \label{fig:boosting_cc_dataset1}
 \end{figure}
+Overall the validation F1 score reaches highest with GBT among all the tested models, indicating that GBT works well with this dataset.
 
-\subsubsection{Case 2: Feature reduction with GBT}
+\subsubsection{Case 2: Feature reduction with GBT and oversampling the minority class \label{sec: dataset1-feature-reduction}}
+
+I also leveraged the feature importance from GBT to perform feature reductions. This approach capitalizes on the boosting tree's ability to learn which combination of features significantly reduces the fitting error. The top four features with the importance are showed in Tab. \ref{tab:feature_importance}. Consider the labeling with "yes" takes only 11.3\% of the dataset, I also applied the minority oversampling technique to balance the dataset. In this case, I reduced the 20 features to top 14 features, mainly reducing the categorical feature. In the end, after data preprocessing with one-hot encoding, the dataset contains 30 features. The rest of hyperparameter tuning and model selection is the same as Sec. \ref{sec:dataset1-case1}. The best KNN model is with $K=3$ and uniform weight; SVM is with RBF kernel and $\gamma=0.1$; NN is with one hidden layer of 45 neurons and 0.005 learning rate; GBT is with max depth 5 and 50 estimators.
 \begin{table}[htbp]
-    \caption{Feature Importance}
+    \caption{Feature importance from GBT in Case 2. The table shows the top four features with the highest importance.}
     \begin{center}
     \begin{tabular}{|l|r|}
     \hline
@@ -389,11 +398,11 @@ GBT & max depth 5, estiamtor 50, subsample 1 & 0.671 & 0.602 \\
     poutcome\_success & 0.032 \\
     \hline
     \end{tabular}
-    \caption{Feature importance from GBT in Case 2. The table shows the top four features with the highest importance.}
     \label{tab:feature_importance}
     \end{center}
 \end{table}
-\subsubsection{Case 3: Oversampling the minority class}
+
+I compared the model performance on the testing set for the two cases, and the results are showed in Tab. \ref{tab:model-performance-dataset1}.  Generally, the full feature set without oversampling outperforms the reduced feature set with oversampling. GBT and NN tend to have better performance in the full feature cases, likely due to the complexity of the dataset. The oversampling technique may have introduced noise, potentially affecting model performance. KNN consistently shows the worst performance, with F1 scores below 0.5, suggesting that nonparametric models may not be suitable for this complex dataset. Overall, the results indicate that for this particular problem, preserving the full feature set and addressing class imbalance through other means might be more effective than feature reduction and oversampling.
 
 \begin{table}[h]
     \centering
@@ -401,26 +410,20 @@ GBT & max depth 5, estiamtor 50, subsample 1 & 0.671 & 0.602 \\
     \hline
     Case No & Model & Accuracy & Precision & Recall & F1 \\
     \hline
-    \multirow{4}{*}{1} 
+    \multirow{4}{*}{\parbox{2cm}{Full features \\ without \\ oversampling}} 
     & KNN & 0.902 & 0.609 & 0.419 & 0.497 \\
     & SVM & 0.915 & 0.658 & 0.494 & 0.564 \\
-    & NN & 0.921 & 0.649 & 0.643 & 0.646 \\
-    & \textbf{GBT} & \textbf{0.923} & \textbf{0.679} & \textbf{0.591} & \textbf{0.632} \\
+    & NN & \textbf{0.923} & 0.665 & \textbf{0.620} & \textbf{0.642} \\
+    & GBT & \textbf{0.923} & \textbf{0.679} & 0.591 & 0.632 \\
     \hline
-    \multirow{4}{*}{2}
-    & KNN & 0.906 & 0.598 & 0.487 & 0.537 \\
-    & SVM & 0.915 & \textbf{0.686} & 0.437 & 0.534 \\
-    & NN & 0.920 & 0.645 & 0.629 & 0.637 \\
-    & \textbf{GBT} & \textbf{0.923} & 0.682 & \textbf{0.587} & \textbf{0.631} \\
-    \hline
-    \multirow{4}{*}{3}
+    \multirow{4}{*}{\parbox{2cm}{Feature reduction \\ with oversampling}}
     & KNN & 0.898 & 0.564 & 0.478 & 0.517 \\
-    & SVM & 0.911 & 0.680 & 0.421 & 0.520 \\
-    & NN & 0.912 & 0.657 & 0.484 & 0.557 \\
-    & \textbf{GBT} & \textbf{0.918} & \textbf{0.671} & \textbf{0.554} & \textbf{0.607} \\
+    & SVM & 0.911 & \textbf{0.680} & 0.421 & 0.520 \\
+    & NN & 0.909 & 0.618 & 0.549 & 0.582 \\
+    & GBT & \textbf{0.918} & 0.671 & \textbf{0.554} & \textbf{0.607} \\
     \hline
     \end{tabular}
-    \caption{Comparison of Model Performance Metrics on Testing Set. The table shows the accuracy, precision, recall, and F1 score for each model in three cases.}
+    \caption{Comparison of Model Performance Metrics on Testing Set. The table shows the accuracy, precision, recall, and F1 score for each model in two cases.}
     \label{tab:model-performance-dataset1}
 \end{table}
 
@@ -444,7 +447,7 @@ The YouTube Comments Spam dataset is a public collection comprising 1,956 real c
 Based on the characteristics of this dataset, I hypothesize that:
 \begin{itemize}
     \item The consistency in user behavior (all spam or all non-spam) might allow for effective user-based features.
-    \item Text embedding size may impact the model performance, with larger embeddings potentially capturing more nuanced information but requiring more data to train effectively.
+    \item Text embedding size may impact the model performance, with larger embedding potentially capturing more nuanced information but requiring more data to train effectively.
     \item Different classification algorithms may perform variably due to the textual nature of the data, with some potentially struggling with the high-dimensional feature space created by text data.
 \end{itemize}
 
@@ -468,7 +471,7 @@ The raw data contained six columns: comment ID, author name, comment date, video
 \item Converting all text to lowercase to ensure consistency
 \item Removing non-alphabetic characters and punctuation
 \item Tokenizing the text into individual words
-\item Removing common English stopwords to reduce noise in the data
+\item Removing common English stop words to reduce noise in the data
 \end{itemize}
 
 \textit{Text Vectorization}: To convert the cleaned text into a format suitable for my machine learning models, I employed two different embedding methods:
@@ -476,13 +479,13 @@ The raw data contained six columns: comment ID, author name, comment date, video
 \subsubsection{Embedding Methods}
 TF-IDF Vectorization
 
-Term Frequency-Inverse Document Frequency (TF-IDF) is a statistical measure used to evaluate the importance of a word to a document in a collection or corpus. I used scikit-learn's TfidfVectorizer with a maximum of 768 features to create sparse vector representations of my documents.
+Term Frequency-Inverse Document Frequency (TF-IDF) is a statistical measure used to evaluate the importance of a word to a document in a collection or corpus \cite{b3}. I used scikit-learn's TfidfVectorizer with a maximum of 768 features to create sparse vector representations of my documents.
 \subsubsection{Transformer-based Embedding}
-For a more advanced representation of the text data, I utilized different pretrained embedding models from the sentence-transformers library. Specifically, I employed 'distilbert-base-nli-mean-tokens' and 'paraphrase-MiniLM-L3-v2' to generate dense vector representations of the documents. The DistilBERT-based model ('distilbert-base-nli-mean-tokens') is a distilled version of BERT, retaining 97\% of BERT's language understanding capabilities while being 40\% smaller and 60\% faster. This model produces embeddings with 768 dimensions, capturing rich semantic information from the input text. The MiniLM-based model ('paraphrase-MiniLM-L3-v2') uses a deep self-attention mechanism to learn language representations, generating more compact embeddings with 384 dimensions while still maintaining high performance on various NLP tasks. 
+For a more advanced representation of the text data, I utilized different pretrained embedding models from the sentence-transformers library. Specifically, I employed 'distilbert-base-nli-mean-tokens' and 'paraphrase-MiniLM-L3-v2' to generate dense vector representations of the documents. The DistilBERT-based model ('distilbert-base-nli-mean-tokens') is a distilled version of BERT, retaining 97\% of BERT's language understanding capabilities while being 40\% smaller and 60\% faster \cite{b4}. This model produces embeddings with 768 dimensions, capturing rich semantic information from the input text. The MiniLM-based model ('paraphrase-MiniLM-L3-v2') generates more compact embeddings with 384 dimensions \cite{b5}.
 
-After preprocessing and embedding, I split my dataset into training and testing sets using an 80-20 split ratio. This allows us to train my models on a substantial portion of the data while retaining a significant amount for testing to ensure robust evaluation of my models' performance.
+After preprocessing and embedding, I split my dataset into training and testing sets using an 80-20 split ratio.
 
-\subsection{Model Implementation and Hyperparameter Tuning}
+\subsection{Model Implementation and Hyperparameter Tuning \label{sec:data2-hyperparameter}}
 I implemented four classification algorithms on the preprocessed YouTube Comments Spam dataset: KNN, SVM, NN, and GBT. I have used the same sklearn framework and default hyperparameters as in Dataset 1, with the following hyperparameters for each model:
 \subsubsection{KNN}
 \begin{itemize}
@@ -505,7 +508,9 @@ With adaptive training rate, I explored the following hyperparameters:
     \item Number of estimators: 50, 100, 150, 200, 250
     \item Maximum tree depth: 10, 15, 20, 25, 30, 35, 40
 \end{itemize}
+
 Different from dataset 1, dataset 2 has relatively balanced classes, which allows me to use accuracy as the primary metric for model selection. To verify my hypothesis, I have conducted three cases of analysis:
+
 \begin{itemize}
     \item Case 1: TF-IDF vectorization with 768 features;
     \item Case 2: DistilBERT embeddings with 768 features;
@@ -514,6 +519,7 @@ Different from dataset 1, dataset 2 has relatively balanced classes, which allow
 All three cases have undergone the same hyperparameter tuning process with 5-fold cross-validation.
 
 \subsection{Results and Analysis}
+The best models for each case are showed in Tab. \ref{tab:model-comparison}, which are is selected with the highest validation acccuracy due to the balanced classes. It displays that  the choice of embedding method/size significantly impacts model performance. Case 2 (DistilBERT embeddings) and Case 3 (MiniLM-based embeddings) consistently outperform Case 1 (TF-IDF vectorization) across all models. This suggests that transformer-based embeddings capture more nuanced semantic information from the text data compared to traditional TF-IDF vectorization.
 
 \begin{table}[htbp]
     \centering
@@ -521,31 +527,34 @@ All three cases have undergone the same hyperparameter tuning process with 5-fol
     \hline
     Case No & Model & Hyperparameters & Training & Validation \\
     \hline
-    \multirow{4}{*}{1} 
-    & KNN & K=4, distance & 0.987 & 0.827 \\
-    & SVM & kernel=rbf, $\gamma=scale$ & 0.974 & 0.909 \\
-    & NN & [250, 100], 0.01 & 0.953 & 0.889 \\
-    & GBT & max depth 10, estimator 50 & 0.982 & 0.900\\
+    \multirow{4}{*}{\parbox{1.2cm}{TF-IDF \\ (768 features)}} 
+    & KNN & \parbox{2.7cm}{K=4, distance }& 0.987 & 0.827 \\
+    & SVM & \parbox{2.7cm}{kernel=rbf, $\gamma=scale$ }& 0.974 & \textbf{0.909} \\
+    & NN & \parbox{2.7cm}{[250, 100], lr=0.01} & 0.953 & 0.889 \\
+    & GBT & \parbox{2.7cm}{max depth 10, estimator 50} & 0.982 & 0.900\\
     \hline
-    \multirow{4}{*}{2}
-    & KNN & K=10, distance & 1.000 & 0.885 \\
-    & SVM & kernel=rbf, $\gamma=0.01$ & 0.998 & 0.916 \\
-    & NN & [100], 0.001 & 0.960 & 0.938 \\
-    & GBT & max depth 3, estimator 250 & 1.000 & 0.910 \\
+    \multirow{4}{*}{\parbox{1.2cm}{DistilBERT\\(768 features)}}
+    & KNN &\parbox{2.7cm}{K=4, distance } & 1.000 & 0.885 \\
+    & SVM & \parbox{2.7cm}{kernel=rbf, $\gamma=0.01$ } & 0.998 & 0.916 \\
+    & NN & \parbox{2.7cm}{[100], lr=0.001} & 0.960 & \textbf{0.938} \\
+    & GBT & \parbox{2.7cm}{max depth 3, estimator 250} & 1.000 & 0.910 \\
     \hline
-    \multirow{4}{*}{3}
-    & KNN & K=10, distance & 1.000& 0.897 \\
-    & SVM & kernel=rbf, $\gamma=scale$ & 0.977 & 0.934 \\
-    & NN & [100], 0.06 & 0.978 & 0.932 \\
-    & GBT & max depth 5, estimator 200 & 1.000 & 0.925 \\
+    \multirow{4}{*}{\parbox{1.2cm}{MiniLM\\ (384 features)}}
+    & KNN & \parbox{2.7cm}{K=10, distance } & 1.000& 0.897 \\
+    & SVM & \parbox{2.7cm}{kernel=rbf, $\gamma=scale$ } & 0.977 & \textbf{0.934} \\
+    & NN & \parbox{2.7cm}{[100], lr=0.06}& 0.978 & 0.932 \\
+    & GBT & \parbox{2.7cm}{max depth 5, estimator 200}  & 1.000 & 0.925 \\
     \hline
     \end{tabular}
     \caption{Best model selection among the four models in each case. The table displays the training and validation accuracy, along with the best hyperparameters for each model.}
     \label{tab:model-comparison}
 \end{table}
 
+KNN shows the poorest performance among the four models, particularly in Case 1; seen in Tab. \ref{tab:model-comparison}. Even through the training accuracy is high, the validation accuracy is significantly lower, indicating overfitting.
+This aligns with our findings from Dataset 1, reinforcing that KNN may not be suitable for high-dimensional data. SVM, NN, and GBT show strong performance, especially in Cases 2 and 3. It demonstrates the three models' ability to capture complex patterns in the embedded text data. The smaller size of embedding in Case 3 does not shows performance drop, indicating that the MiniLM-based embeddings are more efficient in capturing the relevant information for the spam detection task.
+
 % insert learning curves
-\begin{figure*}[htbp]
+\begin{figure}[htbp]
     \centering
     \begin{subfigure}[b]{0.24\textwidth}
         \centering
@@ -571,11 +580,15 @@ All three cases have undergone the same hyperparameter tuning process with 5-fol
         \caption{GBT}
         \label{fig: boosting_lc_dataset2}
     \end{subfigure}
-    \caption{Learning curves for KNN, SVM, NN, GBT in Case 3. The x-axis represents the number of samples, and the y-axis represents the F1-score.}
+    \caption{Learning curves for KNN, SVM, NN, GBT in Case 3. The x-axis represents the number of samples, and the y-axis represents the error rate.}
     \label{fig:lc_dataset2}
-\end{figure*}
+\end{figure}
 
+The learning curve in Fig. \ref{fig:lc_dataset2} provide insights into each model's learning behavior. All four models has significant gap between training and validation error, indicating overfitting. The gap is particularly large for KNN, suggesting that the model is not generalizing well to unseen data. For KNN, SVM, and NN, the gaps don't converge as the sample size increases, indicating that those model might benefit from more data to improve generalization. For GBT, the validation score improves with more data, therefore GBT could benefit from additional samples or stronger regularization.
 
+For hyperparameter analysis, I use the training and validation results from Case 3 from Fig. \ref{fig:knn_cc_dataset2} to Fig. \ref{fig:boosting_cc_dataset2} to provide insights into the model's behavior. The hyperparameter tuning results for KNN, SVM, NN, and GBT are as follows Sec. \ref{sec:data2-hyperparameter}. For Dataset 2, I did not list the training time hyperparameter tuning results, as it delivers the same insights as Dataset 1. 
+
+When tuning the number of neighbors and weights for KNN, Fig. \ref{fig:knn_cc_dataset2} shows that the largest accuracy is at K=10 and then declines. It illustrates that considering too many neighbors introduces noise. Distance-based weights consistently outperform uniform weights, indicating that closer neighbors provide more valuable information for classification.
 % insert hyperparameter tuning
 \begin{figure}[htbp]
     \centering
@@ -591,21 +604,23 @@ All three cases have undergone the same hyperparameter tuning process with 5-fol
         \caption{KNN: Accuracy vs. weights}
         \label{fig: knn_weights_cc_dataset2}
     \end{subfigure}
-    \begin{subfigure}[b]{0.24\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/knn_training_time_neighbor_nlp.png}
-        \caption{KNN: Training time vs. neighbors}
-        \label{fig: knn_training_time_cc_dataset2}
-    \end{subfigure}
-    \begin{subfigure}[b]{0.24\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/knn_training_time_weights_nlp.png}
-        \caption{KNN: Training time vs. weights}
-        \label{fig: knn_training_time_weights_cc_dataset2}
-    \end{subfigure}
-    \caption{KNN hyperparameter tuning in Case 3. The x-axis represents the hyperparameter values, and the y-axis represents the accuracy or training time.}
+    % \begin{subfigure}[b]{0.24\textwidth}
+    %     \centering
+    %     \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/knn_training_time_neighbor_nlp.png}
+    %     \caption{KNN: Training time vs. neighbors}
+    %     \label{fig: knn_training_time_cc_dataset2}
+    % \end{subfigure}
+    % \begin{subfigure}[b]{0.24\textwidth}
+    %     \centering
+    %     \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/knn_training_time_weights_nlp.png}
+    %     \caption{KNN: Training time vs. weights}
+    %     \label{fig: knn_training_time_weights_cc_dataset2}
+    % \end{subfigure}
+    \caption{KNN hyperparameter tuning in Case 3. The x-axis represents the hyperparameter values, and the y-axis represents the accuracy.}
     \label{fig:knn_cc_dataset2}
 \end{figure}
+
+The RBF kernel outperforms than other kernal when setting $\gamma$ as scale, as shown in Fig. \ref{fig:svm_cc_dataset2}. The polynomial kernel has a similar performance to the RBF kernel, but the RBF kernel is more computationally efficient. The $\gamma$ value of scale has the highest accuracy, indicating that a moderate influence of each training example is beneficial for this dataset.
 
 % svm
 \begin{figure}[htbp]
@@ -622,22 +637,23 @@ All three cases have undergone the same hyperparameter tuning process with 5-fol
         \caption{SVM: Accuracy vs. $\gamma$}
         \label{fig: svm_gamma_cc_dataset2}
     \end{subfigure}
-    \begin{subfigure}[b]{0.24\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/svm_training_time_kernel_nlp.png}
-        \caption{SVM: Training time vs. kernel}
-        \label{fig: svm_training_time_cc_dataset2}
-    \end{subfigure}
-    \begin{subfigure}[b]{0.24\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/svm_training_time_gamma_nlp.png}
-        \caption{SVM: Training time vs. $\gamma$}
-        \label{fig: svm_training_time_gamma_cc_dataset2}
-    \end{subfigure}
-    \caption{SVM hyperparameter tuning in Case 3. The x-axis represents the hyperparameter values, and the y-axis represents the accuracy or training time.}
+    % \begin{subfigure}[b]{0.24\textwidth}
+    %     \centering
+    %     \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/svm_training_time_kernel_nlp.png}
+    %     \caption{SVM: Training time vs. kernel}
+    %     \label{fig: svm_training_time_cc_dataset2}
+    % \end{subfigure}
+    % \begin{subfigure}[b]{0.24\textwidth}
+    %     \centering
+    %     \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/svm_training_time_gamma_nlp.png}
+    %     \caption{SVM: Training time vs. $\gamma$}
+    %     \label{fig: svm_training_time_gamma_cc_dataset2}
+    % \end{subfigure}
+    \caption{SVM hyperparameter tuning in Case 3. The x-axis represents the hyperparameter values, and the y-axis represents the accuracy.}
     \label{fig:svm_cc_dataset2}
 \end{figure}
 
+In NN hyperparameter tuning, the single hidden layer with 100 neurons and initial learning rate as 0.06 yeild the best performance; seen in Fig. \ref{fig:nn_cc_dataset2}. The model is sensitive to learning rate, with optimal performance at rates between 0.01 and 0.1. This indicates the importance of careful learning rate tuning for NN performance. With 648 features, 100 neurons are sufficient to capture the relevant information in the data, which significantly reduces the model's complexity and training time.
 % nn
 \begin{figure}[htbp]
     \centering
@@ -653,22 +669,23 @@ All three cases have undergone the same hyperparameter tuning process with 5-fol
         \caption{NN: Accuracy vs. learning rate}
         \label{fig: nn_learning_rate_cc_dataset2}
     \end{subfigure}
-    \begin{subfigure}[b]{0.24\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/nn_training_time_hidden_layer_sizes_nlp.png}
-        \caption{NN: Training time vs. hidden layer sizes}
-        \label{fig: nn_training_time_cc_dataset2}
-    \end{subfigure}
-    \begin{subfigure}[b]{0.24\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/nn_training_time_learning_rate_init_nlp.png}
-        \caption{NN: Training time vs. learning rate}
-        \label{fig: nn_training_time_learning_rate_cc_dataset2}
-    \end{subfigure}
+    % \begin{subfigure}[b]{0.24\textwidth}
+    %     \centering
+    %     \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/nn_training_time_hidden_layer_sizes_nlp.png}
+    %     \caption{NN: Training time vs. hidden layer sizes}
+    %     \label{fig: nn_training_time_cc_dataset2}
+    % \end{subfigure}
+    % \begin{subfigure}[b]{0.24\textwidth}
+    %     \centering
+    %     \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/nn_training_time_learning_rate_init_nlp.png}
+    %     \caption{NN: Training time vs. learning rate}
+    %     \label{fig: nn_training_time_learning_rate_cc_dataset2}
+    % \end{subfigure}
     \caption{NN hyperparameter tuning in Case 3. The x-axis represents the hyperparameter values, and the y-axis represents the accuracy or training time.}
     \label{fig:nn_cc_dataset2}
 \end{figure}
 
+GBT's performance improves with the number of estimators up to about 200, after which returns diminish. Optimal max depth is around 3-5 and the performance drops significantly when the max depth increases, suggesting that deeper trees may lead to overfitting on this dataset.
 % gbt
 \begin{figure}[htbp]
     \centering
@@ -684,55 +701,71 @@ All three cases have undergone the same hyperparameter tuning process with 5-fol
         \caption{GBT: Accuracy vs. max depth}
         \label{fig: boosting_max_depth_cc_dataset2}
     \end{subfigure}
-    \begin{subfigure}[b]{0.24\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/boosting_training_time_n_estimators_nlp.png}
-        \caption{GBT: Training time vs. n estimators}
-        \label{fig: boosting_training_time_cc_dataset2}
-    \end{subfigure}
-    \begin{subfigure}[b]{0.24\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/boosting_training_time_max_depth_nlp.png}
-        \caption{GBT: Training time vs. max depth}
-        \label{fig: boosting_training_time_max_depth_cc_dataset2}
-    \end{subfigure} 
+    % \begin{subfigure}[b]{0.24\textwidth}
+    %     \centering
+    %     \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/boosting_training_time_n_estimators_nlp.png}
+    %     \caption{GBT: Training time vs. n estimators}
+    %     \label{fig: boosting_training_time_cc_dataset2}
+    % \end{subfigure}
+    % \begin{subfigure}[b]{0.24\textwidth}
+    %     \centering
+    %     \includegraphics[width=\textwidth]{../figures/dataset2_bert_384/boosting_training_time_max_depth_nlp.png}
+    %     \caption{GBT: Training time vs. max depth}
+    %     \label{fig: boosting_training_time_max_depth_cc_dataset2}
+    % \end{subfigure} 
     \caption{GBT hyperparameter tuning in Case 3. The x-axis represents the hyperparameter values, and the y-axis represents the accuracy or training time.}
     \label{fig:boosting_cc_dataset2}
 \end{figure}
 
-\begin{table}[h]
+The Tab. \ref{tab:model-performance-dataset2} summarize the model performance on the testing sets for the three cases. In the TF-IDF case, GBT achieves the highest accuracy (0.887), precision (0.969) and F1 score (0.894), while NN shows the best recall (0.892) and F1 score (0.894). For DistilBERT embeddings, SVM outperforms other models with the highest accuracy (0.941), recall (0.946), and F1 score (0.948), while NN achieves the best precision (0.965). In the MiniLM embedding case, SVM again leads in accuracy (0.941), recall (0.919) F1 score (0.947), with NN showing the highest precision (0.990). Notably, all models show improved performance with transformer-based embeddings (DistilBERT and MiniLM) compared to TF-IDF, with accuracy improvements ranging from 2\% to 10\% relatively. This consistent improvement across all models underscores the effectiveness of advanced embedding techniques in capturing relevant features for spam detection. The high precision values, particularly for SVM and NN, indicate that these models are especially effective, which is crucial in spam detection applications.
+
+\begin{table}[htbp]
     \centering
     \begin{tabular}{|c|l|c|c|c|c|}
     \hline
     Case No & Model & Accuracy & Precision & Recall & F1 \\
     \hline
-    \multirow{4}{*}{1} 
+    \multirow{4}{*}{\parbox{1.2cm}{TF-IDF \\ (768 features)}} 
     & KNN & 0.821 & 0.896 & 0.776 & 0.832 \\
     & SVM & 0.882 & 0.968 & 0.821 & 0.888 \\
-    & NN & 0.880 & 0.896 & 0.892 & 0.894 \\
-    & \textbf{GBT} & \textbf{0.887} & \textbf{0.969} & 0.830 & \textbf{0.894} \\
+    & NN & 0.880 & 0.896 & \textbf{0.892} & \textbf{0.894} \\
+    & GBT & \textbf{0.887} & \textbf{0.969} & 0.830 & \textbf{0.894} \\
     \hline
-    \multirow{4}{*}{2}
+    \multirow{4}{*}{\parbox{1.2cm}{DistilBERT\\(768 features)}}
     & KNN & 0.892 & 0.933 & 0.874 & 0.903 \\
-    & \textbf{SVM} & \textbf{0.941} & \textbf{0.950} & \textbf{0.946} & \textbf{0.948} \\
-    & NN & 0.911 & 0.965 & 0.874 & 0.917 \\
+    & SVM & \textbf{0.941} & 0.950 & \textbf{0.946} & \textbf{0.948} \\
+    & NN & 0.911 & \textbf{0.965} & 0.874 & 0.917 \\
     & GBT & 0.908 & 0.947 & 0.888 & 0.917 \\
     \hline
-    \multirow{4}{*}{3}
+    \multirow{4}{*}{\parbox{1.2cm}{MiniLM\\ (384 features)}}
     & KNN & 0.901 & 0.926 & 0.897 & 0.911 \\
-    & \textbf{SVM} & \textbf{0.941} & 0.976 & \textbf{0.919} & \textbf{0.947} \\
+    & SVM & \textbf{0.941} & 0.976 & \textbf{0.919} & \textbf{0.947} \\
     & NN & 0.926 & \textbf{0.990} & 0.879 & 0.931 \\
     & GBT & 0.906 & 0.939 & 0.892 & 0.915 \\
     \hline
     \end{tabular}
-    \caption{Updated Comparison of Model Performance Metrics on Testing Set. The table shows the accuracy, precision, recall, and F1 score for each model in three cases.}
+    \caption{Model Performance Metrics on Testing Set. The table shows the accuracy, precision, recall, and F1 score for each model in three cases.}
     \label{tab:model-performance-dataset2}
 \end{table}
 
+Unlike the Bank Marketing dataset, the YouTube Comments Spam dataset is more balanced and involves text classification. This leads to some notable differences in model behavior:
+\begin{itemize}
+    \item SVM performs exceptionally well on this text classification task, whereas it was outperformed by NN and GBT in the Bank Marketing dataset.
+    \item The impact of embedding methods is significant in text classification tasks. Transformer based embedding methods (DistilBERT and MiniLM) outperform traditional TF-IDF vectorization.
+    \item All models achieve higher accuracy on this dataset compared to the Bank Marketing dataset, possibly due to the more balanced nature of the classes and the effectiveness of text embeddings in capturing relevant features.
+\end{itemize}
+
+
+\section{Conclusion and Discussion}
+In this report, I conducted a comparative analysis of four machine learning models (KNN, SVM, NN, and GBT) on two distinct datasets: Bank Marketing Campaign Subscription and YouTube Comments Spam Detection. The analysis revealed that KNN generally performs poorly on high-dimensional data, while SVM excels in text classification tasks. GBT and NN work well for tabular datasets, and all models benefit from transformer-based embeddings in text classification tasks.
+
+However, challenges remain in the analysis. For Dataset 1, which is unbalanced, model performance was not optimal. Given more time, additional feature engineering could potentially improve results. In the text classification task, I have not fully explored data preprocessing, which currently combines user comments, author names, and video titles. This approach, while generic, may not be ideal for new users or videos. With additional time, I would like to investigate a more robust method that focuses solely on comment content, potentially leading to a more generalizable solution.
 \begin{thebibliography}{00}
 \bibitem{b1} Bank Marketing Campaign Subscription data source: https://www.kaggle.com/datasets/pankajbhowmik/bank-marketing-campaign-subscriptions
 \bibitem{b2} Youtube Comments Spam data source: https://www.kaggle.com/datasets/ahsenwaheed/youtube-comments-spam-dataset
-
+\bibitem{b3} Wikipedia contributors. (2024, July 26). TfIdf. In Wikipedia, The Free Encyclopedia. Retrieved 10:20, September 22, 2024, from https://en.wikipedia.org/w/index.php?title=Tf%E2%80%93idf&oldid=1236851603
+\bibitem{b4} Sanh, V., Debut, L., Chaumond, J., \& Wolf, T. (2019). DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter. ArXiv, abs/1910.01108.
+\bibitem{b5} Wenhui Wang, Furu Wei, Li Dong, Hangbo Bao, Nan Yang, \& Ming Zhou. (2020). MiniLM: Deep Self-Attention Distillation for Task-Agnostic Compression of Pre-Trained Transformers.
 \end{thebibliography}
 
 

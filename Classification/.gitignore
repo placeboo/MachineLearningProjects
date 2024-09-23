@@ -25,3 +25,4 @@ writing/
 *.DS_Store
 *.pdf
 *.png
+/README.txt
