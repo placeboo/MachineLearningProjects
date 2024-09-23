@@ -1,10 +1,14 @@
 
 # To Start
 1. Clone the repository
-2. Download the datasets from the links provided below in [Dataset](#Dataset) section
-3. Create the environment ```conda env create -f environment.yml```
+2. Download the datasets from the links provided below in [Dataset](#Dataset) section. Create folders `data/dataset1/raw` and `data/dataset2/raw` in the root of the repository and save the datasets in the respective folders.
+3. Create the environment
+```
+conda env create -f environment.yml
+conda activate classification
+```
 4. Set the working directory to the root of the repository in the terminal, which is the directory containing the `main_dateset1.py` and `main_dateset2.py`.
-4. Run the code. The input parameters are saved in the `dataset1_config` and `dataset_config` folders. You can change the parameters in the file to run the code with different parameters.
+4. Run the code. The input parameters are saved in the `dataset1_c[supervised_learning_classification.tex](writing/supervised_learning_classification.tex)onfig` and `dataset_config` folders. You can change the parameters in the file to run the code with different parameters.
 To run the model, use the following command:
 ```python
 python main_dataset1.py -c {config file path} -m {model_name}
