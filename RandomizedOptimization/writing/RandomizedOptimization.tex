@@ -1,0 +1,41 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it .
+%Template version as of 6/27/2024
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{amsmath,amssymb,amsfonts}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{Randomized Optimization Algorithms}
+\author{\IEEEauthorblockN{Jiaqi Yin (jyin90)}}
+\maketitle
+
+\begin{IEEEkeywords}
+Random Hill Climbing, Simulated Annealing, Genetic Algorithm
+\end{IEEEkeywords}
+
+\section{Four-Peaks Problem}
+The four-peak problem operates on string bit $s$. The goal is to maximize a fitness function \ref{eq: 4-peak-fitness} based on the consecutive number of 1s in the string and thresholds $R$. 
+\begin{align}
+    f(s, R) = & \max{\{T(s), H(s)\}} \nonumber \\
+    &+ \mid s \mid \cdot \mathbb{I}\{(H(s) > R) \land (T(s) > R)\}\label{eq: 4-peak-fitness}
+\end{align}
+where $T(s)$ is the number of consecutive 1s at the beginning of the string $s$, $H(s)$ is the number of consecutive 1s at the end of the string $s$, $R$ is a thresholds, $ \mid s \mid $ is the length of the string, and $\mathbb{I}$ is the indicator function. There are four "peaks"
+as the landscape charecterized by the fitness function: two local optimas and two global optima. For quick understanding, suppose the string length is 8, and the threshold $R$ is 3. \begin{itemize}
+    \item Two local optimas: 11111111, 00000000, whose fitness is 8;
+    \item Two global optimas: 11110000, 00001111, whose fitness is 12.
+\end{itemize}
+\end{document}
