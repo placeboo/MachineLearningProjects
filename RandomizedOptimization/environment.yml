@@ -1,0 +1,12 @@
+name: RandomizedOptimization
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - mlrose-ky
+      - numpy
+      - ipykernel
+      - seaborn
