@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+import ast
 
 def save_results(results: pd.DataFrame, problem_name: str, output_dir: str = 'results'):
     """
@@ -19,19 +19,16 @@ def save_results(results: pd.DataFrame, problem_name: str, output_dir: str = 're
     print(f"Results saved to {filename}")
 
 
-def load_results(problem_name: str, input_dir: str = 'results') -> pd.DataFrame:
+def load_results(problem_name, input_dir) -> pd.DataFrame:
     """
     Load the experiment results from a CSV file.
 
     :param problem_name: Name of the problem (e.g., 'four_peaks')
-    :param input_dir: Directory to load the results from (default is 'results')
-    :return: DataFrame containing experiment results
+    :param input_dir: Directory containing the results
+    :return: DataFrame containing the experiment results
     """
     filename = os.path.join(input_dir, f"{problem_name}_results.csv")
-    results = pd.read_csv(filename)
-    results['best_state'] = results['best_state'].apply(eval)
-    results['fitness_curve'] = results['fitness_curve'].apply(eval)
-    return results
+    return pd.read_csv(filename)
 
 
 def set_plot_style():
@@ -77,7 +74,7 @@ def plot_performance_vs_size(results: pd.DataFrame, metric: str, output_dir: str
     """
     set_plot_style()
 
-    plt.figure(figsize=(5, 3.5))  # Slightly larger figure for better readability
+    # plt.figure(figsize=(5, 3.5))  # Slightly larger figure for better readability
 
     sns.lineplot(data=results, x='problem_size', y=metric, hue='algorithm', marker='o')
 
@@ -101,7 +98,7 @@ def plot_convergence_vs_size(results: pd.DataFrame, output_dir: str = 'plots'):
     """
     set_plot_style()
 
-    plt.figure(figsize=(5, 3.5))  # Slightly larger figure for better readability
+    # plt.figure(figsize=(5, 3.5))  # Slightly larger figure for better readability
 
     def calculate_convergence(row):
         fitness_curve = np.array(row['fitness_curve'])
@@ -119,3 +116,147 @@ def plot_convergence_vs_size(results: pd.DataFrame, output_dir: str = 'plots'):
     plt.tight_layout()
 
     save_plot("convergence_vs_size", output_dir)
+
+
+def plot_fitness_vs_iteration(results: pd.DataFrame, output_dir: str = 'plots'):
+    """
+    Plot fitness vs iteration for each algorithm and problem size.
+    """
+    set_plot_style()
+
+    # Create a separate plot for each algorithm
+    for algorithm in results['algorithm'].unique():
+        # plt.figure(figsize=(5, 3.5))
+
+        # Filter data for the current algorithm
+        alg_data = results[results['algorithm'] == algorithm]
+
+        # Plot fitness curves for each problem size
+        for _, row in alg_data.iterrows():
+            fitness_curve = np.array(row['fitness_curve'])
+            iterations = range(1, len(fitness_curve) + 1)
+            fitness = [pair[0] for pair in fitness_curve]
+            plt.plot(iterations, fitness, label=f"Size {row['problem_size']}")
+
+        plt.xlabel('Iteration')
+        plt.ylabel('Best Fitness')
+        plt.title(f'Best Fitness vs Iteration - {algorithm}')
+        plt.legend(title='Problem Size', bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.tight_layout()
+
+        # Save the plot
+        save_plot(f"fitness_vs_iteration_{algorithm}", output_dir)
+
+
+def plot_iterations_vs_time(results: pd.DataFrame, output_dir: str = 'plots'):
+    """
+    Plot iterations vs execution time for all algorithms and problem sizes.
+    """
+    set_plot_style()
+
+    # plt.figure(figsize=(8, 6))
+
+    algorithms = results['algorithm'].unique()
+    markers = ['o', 's', '^', 'D']  # Different markers for different problem sizes
+
+    for alg, marker in zip(algorithms, markers):
+        alg_data = results[results['algorithm'] == alg]
+        plt.scatter(alg_data['execution_time'], alg_data['iterations'],
+                    label=alg, marker=marker, s=50)
+
+        # Add lines connecting points for the same algorithm
+        for size in alg_data['problem_size'].unique():
+            size_data = alg_data[alg_data['problem_size'] == size]
+            plt.plot(size_data['execution_time'], size_data['iterations'],
+                     linestyle='--', alpha=0.5)
+
+    plt.xlabel('Execution Time (seconds)')
+    plt.ylabel('Iterations')
+    plt.title('Iterations vs Execution Time')
+    plt.legend(title='Algorithm')
+
+    # Add problem size annotations
+    for _, row in results.iterrows():
+        plt.annotate(f"{row['problem_size']}",
+                     (row['execution_time'], row['iterations']),
+                     xytext=(5, 5), textcoords='offset points', fontsize=8)
+
+    plt.tight_layout()
+    save_plot("iterations_vs_time", output_dir)
+
+
+def load_processed_data(output_dir):
+    X_train = np.load(os.path.join(output_dir, 'X_train.npy'))
+    X_test = np.load(os.path.join(output_dir, 'X_test.npy'))
+    y_train = np.load(os.path.join(output_dir, 'y_train.npy'))
+    y_test = np.load(os.path.join(output_dir, 'y_test.npy'))
+    return X_train, X_test, y_train, y_test
+
+def plot_best_model_comparison(best_results: pd.DataFrame, output_dir: str = 'plots'):
+    set_plot_style()
+    # compare validation f1 scores
+    width = 0.3
+    x = np.arange(len(best_results))
+    plt.bar(x - width/2.0, best_results['train_accuracy'], width=width, label='Train', color='r', alpha=0.5)
+    plt.bar(x + width/2.0, best_results['val_accuracy'], width=width, label='Val', color='b', alpha=0.5)
+
+    plt.xlabel('Algorithm')
+    plt.ylabel('Accuracy')
+    plt.title('Best Model Performance Comparison')
+    plt.xticks(x, ['RHC', 'SA', 'GA'])
+    plt.legend(loc='best', frameon=True, fancybox=False, edgecolor='black')
+    # Add value labels on top of each bar
+    for i, v in enumerate(best_results['train_accuracy']):
+        plt.text(i - width/2.0, v, f'{v:.3f}', ha='center', va='bottom')
+    for i, v in enumerate(best_results['val_accuracy']):
+        plt.text(i + width/2.0, v, f'{v:.3f}', ha='center', va='bottom')
+    plt.ylim(0, 1)
+    plt.tight_layout()
+    save_plot("best_model_comparison", output_dir)
+
+def plot_nn_fitness_curves(best_results_df: pd.DataFrame, output_dir: str = 'plots'):
+    """
+    Plot fitness curves for the best models of each algorithm.
+
+    :param best_results_df: DataFrame containing the best results and fitness curves
+    :param output_dir: Directory to save the plots
+    """
+    set_plot_style()
+
+    for _, row in best_results_df.iterrows():
+        alg = row['algorithm']
+        fitness_value = parse_fitness_curve(row['fitness_curve'])
+        iterations = range(1, len(fitness_value) + 1)
+        plt.plot(iterations, fitness_value, label=alg)
+
+    plt.xlabel('Iteration')
+    plt.ylabel('Fitness')
+    plt.title('Fitness Curves for Best Models')
+    plt.legend(title='Algorithm')
+    plt.tight_layout()
+    plt.legend(loc='best', frameon=True, fancybox=False, edgecolor='black')
+
+    save_plot("nn_fitness_curves", output_dir)
+
+
+def parse_fitness_curve(fitness_curve_str: str) -> tuple:
+    """
+    Parse the string representation of the fitness curve and return fitness values and iteration values.
+
+    :param fitness_curve_str: String representation of the fitness curve
+    :return: Tuple of (fitness_values, iteration_values) as NumPy arrays
+    """
+    # Remove the "array(" prefix and ")" suffix if present
+    cleaned_str = fitness_curve_str.strip("array(").rstrip(")")
+
+    # Remove any single quotes around the inner list
+    cleaned_str = cleaned_str.strip("'")
+    # Use ast.literal_eval to safely evaluate the string as a Python literal
+    fitness_curve_list = ast.literal_eval(cleaned_str)
+    # Convert the list to a NumPy array
+    fitness_curve_array = np.array(fitness_curve_list)
+    # Extract fitness values and iteration values
+    fitness_values = fitness_curve_array[:, 0]
+
+
+    return fitness_values
