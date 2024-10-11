@@ -29,6 +29,10 @@ def create_queens_problem(size: int) -> mlrose.DiscreteOpt:
                     # If no attacks, then increment counter
                     fitness_cnt += 1
         return fitness_cnt
+
+    # def queens_max(state):
+    #     queens_fitness = mlrose.Queens()
+    #     return -queens_fitness.evaluate(state)
     fitness =  mlrose.CustomFitness(queens_max)
     problem =  mlrose.DiscreteOpt(length=size, fitness_fn=fitness, maximize=True, max_val=size)
     return problem
@@ -116,16 +120,6 @@ def run_queues_experiment(problem_sizes: List[int],
                     'fitness_curve': alg_results['fitness_curve'].tolist(),
                     'iterations': alg_results['iterations']
                 })
-        # for alg_name in algorithms:
-        #     alg_results = run_algorithm(problem, alg_name, **hyperparameters[alg_name])
-        #     results.append({
-        #         'problem_size': size,
-        #         'algorithm': alg_name,
-        #         'best_fitness': alg_results['best_fitness'],
-        #         'execution_time': alg_results['execution_time'],
-        #         'fitness_curve': alg_results['fitness_curve'].tolist(),
-        #         'iterations': alg_results['iterations']
-        #     })
 
     return pd.DataFrame(results)
 

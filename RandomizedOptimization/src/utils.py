@@ -4,6 +4,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import ast
+from itertools import cycle
+from scipy.stats import alpha
+from stack_data import markers_from_ranges
+
 
 def save_results(results: pd.DataFrame, problem_name: str, output_dir: str = 'results'):
     """
@@ -41,7 +45,7 @@ def set_plot_style():
         'axes.titlesize': 10,
         'xtick.labelsize': 8,
         'ytick.labelsize': 8,
-        'legend.fontsize': 8,
+        'legend.fontsize': 6,
         'figure.facecolor': 'white',
         'text.usetex': True,
         'font.family': 'serif',
@@ -74,19 +78,21 @@ def plot_performance_vs_size(results: pd.DataFrame, metric: str, output_dir: str
     """
     set_plot_style()
 
-    # plt.figure(figsize=(5, 3.5))  # Slightly larger figure for better readability
+    #plt.figure(figsize=(5, 3.5))  # Slightly larger figure for better readability
 
-    sns.lineplot(data=results, x='problem_size', y=metric, hue='algorithm', marker='o')
+    sns.lineplot(data=results, x='problem_size', y=metric, hue='algorithm', marker='o',alpha=0.6, markersize=4)
 
     plt.xlabel('Problem Size')
     ylabel = 'Best Fitness' if metric == 'best_fitness' else 'Execution Time (seconds)'
     plt.ylabel(ylabel)
     title = 'Best Fitness vs Problem Size' if metric == 'best_fitness' else 'Execution Time vs Problem Size'
     plt.title(title)
-    plt.legend(title='Algorithm', bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.legend(title='Algorithm', loc='best', frameon=True, fancybox=False, edgecolor='black')
     plt.tight_layout()
 
     save_plot(f"{metric}_vs_size", output_dir)
+    # show
+    plt.show()
 
 
 def plot_convergence_vs_size(results: pd.DataFrame, output_dir: str = 'plots'):
@@ -112,7 +118,7 @@ def plot_convergence_vs_size(results: pd.DataFrame, output_dir: str = 'plots'):
     plt.xlabel('Problem Size')
     plt.ylabel('Iterations to 95% Max Fitness')
     plt.title('Convergence Speed vs Problem Size')
-    plt.legend(title='Algorithm', bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.legend(title='Algorithm', loc='best', frameon=True, fancybox=False, edgecolor='black')
     plt.tight_layout()
 
     save_plot("convergence_vs_size", output_dir)
@@ -141,7 +147,7 @@ def plot_fitness_vs_iteration(results: pd.DataFrame, output_dir: str = 'plots'):
         plt.xlabel('Iteration')
         plt.ylabel('Best Fitness')
         plt.title(f'Best Fitness vs Iteration - {algorithm}')
-        plt.legend(title='Problem Size', bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.legend(title='Algorithm', loc='best', frameon=True, fancybox=False, edgecolor='black')
         plt.tight_layout()
 
         # Save the plot
@@ -162,27 +168,38 @@ def plot_iterations_vs_time(results: pd.DataFrame, output_dir: str = 'plots'):
     for alg, marker in zip(algorithms, markers):
         alg_data = results[results['algorithm'] == alg]
         plt.scatter(alg_data['execution_time'], alg_data['iterations'],
-                    label=alg, marker=marker, s=50)
-
-        # Add lines connecting points for the same algorithm
-        for size in alg_data['problem_size'].unique():
-            size_data = alg_data[alg_data['problem_size'] == size]
-            plt.plot(size_data['execution_time'], size_data['iterations'],
-                     linestyle='--', alpha=0.5)
+                    label=alg, marker=marker, s=30, alpha=0.6)
 
     plt.xlabel('Execution Time (seconds)')
     plt.ylabel('Iterations')
     plt.title('Iterations vs Execution Time')
     plt.legend(title='Algorithm')
+    plt.legend(title='Algorithm', loc='best', frameon=True, fancybox=False, edgecolor='black')
 
     # Add problem size annotations
     for _, row in results.iterrows():
         plt.annotate(f"{row['problem_size']}",
                      (row['execution_time'], row['iterations']),
-                     xytext=(5, 5), textcoords='offset points', fontsize=8)
+                     xytext=(5, 5), textcoords='offset points', fontsize=6)
 
     plt.tight_layout()
     save_plot("iterations_vs_time", output_dir)
+
+def plot_fitness_vs_iteration_wsize(results, size, fig_dir):
+    set_plot_style()
+    sub_results = results[results['problem_size'] == size]
+
+    plt.figure()
+    for algo in sub_results['algorithm'].unique():
+        sub_results_algo = sub_results[sub_results['algorithm'] == algo]
+        for i, row in sub_results_algo.iterrows():
+            fitness_values = parse_fitness_curve(row['fitness_curve'])
+            plt.plot(fitness_values, label=f'{algo}', alpha=0.6)
+    plt.xlabel('Iteration')
+    plt.ylabel('Fitness')
+    plt.title(f'Fitness vs Iteration - Size {size}')
+    plt.legend(loc='best', frameon=True, fancybox=False, edgecolor='black')
+    save_plot(f'fitness_vs_iteration_{size}', fig_dir)
 
 
 def load_processed_data(output_dir):
@@ -258,5 +275,71 @@ def parse_fitness_curve(fitness_curve_str: str) -> tuple:
     # Extract fitness values and iteration values
     fitness_values = fitness_curve_array[:, 0]
 
-
     return fitness_values
+
+
+def plot_parameter_vs_metric(df, algorithm, primary_param, metric, secondary_param=None, output_dir='figures'):
+    set_plot_style()
+    alg_df = df[df['algorithm'] == algorithm]
+
+    # Handle schedule parameter
+    for param in [primary_param, secondary_param]:
+        if param == 'param_schedule':
+            alg_df[param] = alg_df[param].apply(lambda x: 'GeomDecay' if str(x) == '1.0' else str(x).split('(')[0])
+
+    if pd.api.types.is_numeric_dtype(alg_df[primary_param]):
+        if secondary_param:
+            for secondary_value in alg_df[secondary_param].unique():
+                subset = alg_df[alg_df[secondary_param] == secondary_value]
+                plt.plot(subset[primary_param], subset[metric], 'o-', label=secondary_value, alpha=0.6, markersize=4)
+        else:
+            plt.plot(alg_df[primary_param], alg_df[metric], 'o-', alpha=0.6, markersize=4)
+    else:
+        if secondary_param:
+            sns.barplot(data=alg_df, x=primary_param, y=metric, hue=secondary_param, alpha=0.6)
+        else:
+            sns.barplot(data=alg_df, x=primary_param, y=metric, alpha=0.6)
+
+    plt.title(f'{algorithm}: {metric} vs {primary_param.replace("param_", "")}')
+    plt.xlabel(primary_param.replace("param_", "").replace("_", " ").title())
+    plt.ylabel(metric.replace("_", " ").title())
+
+    if secondary_param:
+        plt.legend(title=secondary_param.replace("param_", "").replace("_", " ").title(),
+                   loc='best', frameon=True, fancybox=False, edgecolor='black')
+
+    # Rotate x-axis labels if they are not numeric
+    if not pd.api.types.is_numeric_dtype(alg_df[primary_param]):
+        plt.xticks(rotation=45, ha='right')
+
+    plt.tight_layout()
+    save_plot(f'{algorithm}_{metric}_vs_{primary_param}', output_dir)
+    plt.close()
+
+
+def plot_fitness_curve_with_params(df, algorithm, params, output_dir):
+    set_plot_style()
+
+    alg_df = df[df['algorithm'] == algorithm].copy()
+    if 'schedule' in params:
+        alg_df['param_schedule'] = alg_df['param_schedule'].apply(
+            lambda x: 'GeomDecay' if str(x) == '1.0' else str(x).split('(')[0])
+
+    param_columns = [f'param_{param}' for param in params]
+    alg_df['param_combination'] = alg_df[param_columns].apply(
+        lambda row: '_'.join(f"{col.replace('param_', '')}:{row[col]}" for col in param_columns),
+        axis=1
+    )
+    # Plot fitness curves for each parameter combination
+    for param_combo, group in alg_df.groupby('param_combination'):
+        for _, row in group.iterrows():
+            fitness_values = parse_fitness_curve(row['fitness_curve'])
+            plt.plot(fitness_values, label=param_combo, alpha=0.6)
+
+    plt.title(f'{algorithm}: Fitness Curves for Different Parameters')
+    plt.xlabel('Iterations')
+    plt.ylabel('Fitness')
+    plt.legend(title='Parameter', loc='best', frameon=True, fancybox=False, edgecolor='black')
+    plt.tight_layout()
+    save_plot(f'{algorithm}_fitness_curves', output_dir)
+    plt.close()

@@ -23,19 +23,207 @@
 \author{\IEEEauthorblockN{Jiaqi Yin (jyin90)}}
 \maketitle
 
-\begin{IEEEkeywords}
-Random Hill Climbing, Simulated Annealing, Genetic Algorithm
-\end{IEEEkeywords}
+% \begin{IEEEkeywords}
+% Random Hill Climbing, Simulated Annealing, Genetic Algorithm, 
+% \end{IEEEkeywords}
+\section{Introduction}
+In this report, I will explore and study the performance of different randomized optimization algorithms on two domains: discrete optimization problems and neural network weight optimization. In Sec. \ref{sec:optimization-problems-n-queens}, I will focus on two discrete optimization problems: N-Queens, which is designed to highlight the advantages of Simulated Annealing (SA), and Four-Peaks, which is chosen to showcase the strengths of the Genetic Algorithm (\verb|GA|). I have implemented Random Hill Climbing (\verb|RHC|), Simulated Annealing (SA), and Genetic Algorithm (\verb|GA|) to solve these problems. I will compare the performance of the algorithms on different problem sizes and selected hyperparameters. In Sec. \ref{sec:neural-network}, I will apply these three algorithms to optimize the weights of a neural network from Assignment 1, which used the YouTube comment spam detection dataset. I will compare these algorithms on the neural network with different hyperparameters and contrast them with the traditional backpropagation algorithm from Assignment 1.
 
-\section{Four-Peaks Problem}
-The four-peak problem operates on string bit $s$. The goal is to maximize a fitness function \ref{eq: 4-peak-fitness} based on the consecutive number of 1s in the string and thresholds $R$. 
-\begin{align}
-    f(s, R) = & \max{\{T(s), H(s)\}} \nonumber \\
-    &+ \mid s \mid \cdot \mathbb{I}\{(H(s) > R) \land (T(s) > R)\}\label{eq: 4-peak-fitness}
-\end{align}
-where $T(s)$ is the number of consecutive 1s at the beginning of the string $s$, $H(s)$ is the number of consecutive 1s at the end of the string $s$, $R$ is a thresholds, $ \mid s \mid $ is the length of the string, and $\mathbb{I}$ is the indicator function. There are four "peaks"
-as the landscape charecterized by the fitness function: two local optimas and two global optima. For quick understanding, suppose the string length is 8, and the threshold $R$ is 3. \begin{itemize}
-    \item Two local optimas: 11111111, 00000000, whose fitness is 8;
-    \item Two global optimas: 11110000, 00001111, whose fitness is 12.
+
+\section{Discrete Optimization Problems: N-Queens\label{sec:optimization-problems-n-queens}}
+
+N-queeu is a discrete optimization problem which places $N$ queens on an $N \times N$ chessboard such that no two queens attack each other \cite{b1}. The fitness function is the number of paris of non-attacking queens for a given state. The goal is to maximize the fitness function. The constraints of the probem are no two queens can be in the same row, column, or diagonal. The problem is interesting for several reasons:
+\begin{itemize}
+    \item \textbf{Complexity}: As the number of board size $N$ increases, the number of possible states grows exponentially. The problem is NP-hard.
+    \item \textbf{Local Optima}: N-queens have many local optima,and the number increases with the board size.
 \end{itemize}
+Based on my understanding of algorithms, I have the following \textbf{hypotheses}:
+\begin{itemize}
+    \item placeholder
+\end{itemize}
+
+\subsection{Experimental Setup\label{sec:nqueens-experimental-setup}}
+For the N-Queens problem, I implemented the experiments using the \verb|mlrose-ky| library. The problem was defined using a custom fitness function that calculates the \textit{logrithm} of number of non-attacking queen pairs, with the goal of maximizing this value. The experiments were structured as follows:
+\begin{enumerate}
+    \item \textbf{Size Experiment}: I tested the algorithms on a range of board sizes: $N = 8, 16, 24, \ldots, 120$:
+    \begin{itemize}
+        \item Algorithms: \verb|RHC|, SA, \verb|GA|
+        \item Fixed Parameters: maximum iteratations = 1000, maximum attempts = 100, random seed = 42;
+        \item Algorithm-specific Parameters: RHC with 10 restarts, SA with exponential decay schedule, \verb|GA| with population size = 200, mutation probability = 0.1
+    \end{itemize}
+    \item \textbf{Hyperparameters Experiment}: With fixed problem size $N = 56$,  max iterations = 1000, max attempts = 100 (except for SA),and random seed = 42, I tested the algorithms with different hyperparameters:
+    \begin{itemize}
+        \item \verb|RHC||:  Restarts: $[5, 10, 20]$
+        \item SA: Schedule: [\texttt{ArithDecay()}, \texttt{GeomDecay()}, \texttt{ExpDecay()}];  Maximum attempts: $[10, 20, 50, 100]$
+        \item \verb|GA|: Population size: $[100, 200, 400]$; Mutation probability: $[0.1, 0.2, 0.3, 0.4]$
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Results}
+\textbf{Performance across Problem Sizes}
+
+\begin{figure*}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.32\textwidth}
+        \includegraphics[width=\textwidth]{../figures/nqueens/size_experiment/best_fitness_vs_size_vs_problem_size.png}
+        \caption{Best Fitness vs. Problem Size}
+        \label{fig: nqueens-best-fitness-vs-size}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.32\textwidth}
+        \includegraphics[width=\textwidth]{../figures/nqueens/size_experiment/execution_time_vs_size_vs_problem_size.png}
+        \caption{Execution Time vs. Problem Size}
+        \label{fig: nqueens-execution-time-vs-size}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.32\textwidth}
+        \includegraphics[width=\textwidth]{../figures/nqueens/size_experiment/fitness_vs_iteration_40_vs_problem_size.png}
+        \caption{Fitness vs. Iteration at size = 40}
+        \label{fig: nqueens-fitness-vs-iteration}
+    \end{subfigure}
+    \caption{N-Queens: Performance metrics with respect to different algorithms: RHC, SA, GA.}
+    \label{fig: nqueens-performance-metrics}
+\end{figure*}
+
+Fig. \ref{fig: nqueens-performance-metrics} and Fig. \ref{fig: nqueens-iterations-vs-time-vs-size} show the performance metrics of the algorithms (\verb|RHC|, \verb|SA| , \verb|GA|) on the N-Queens problem with respect to different problem sizes. From Fig. \ref{fig: nqueens-best-fitness-vs-size}, we can see that the best fitness increases with the problem size, which is expected given that the board increases, thereby allowing for more non-attacking queens. As I have tested board sizes from 8 to 120, the fitness values for each algorithm are relatively close to each other. When examining the best fitness value for each algorithm, it shows that \verb|SA|  has slightly better performance when the board size is less than 40. This can be seen in Fig. \ref{fig: nqueens-fitness-vs-iteration}, which shows the fitness curve for each algorithm at a fixed problem size of 40. \verb|SA|  converges at a fitness value of 775 at iteration 1000, while GA and \verb|RHC| converge at fitness values of 773 and 772, respectively. When the board size increases, \verb|GA| consistently outperforms both \verb|RHC| and \verb|SA|  by 0.1\% in fitness value. However, when compared with execution time, \verb|GA| is the slowest algorithm and increases exponentially, as seen in Fig. \ref{fig: nqueens-execution-time-vs-size}. \verb|SA| is the fastest algorithm among the three and doesn't increase much when the board size is 120. At board size 120, \verb|GA| takes 227 seconds to finish, while \verb|SA| only takes 3 seconds, and \verb|RHC| takes 22. Compared with the relatively close fitness values, \verb|SA| demonstrates clear advantages over \verb|GA| and \verb|RHC|. When looking at the convergence speed in Fig. \ref{fig: nqueens-fitness-vs-iteration}, \verb|GA| exhibits the fastest initial convergence. \verb|SA|  shows a more gradual improvement curve, with some fluctuations likely due to its ability to accept worse solutions temporarily. \verb|RHC| starts with the lowest fitness value and increases speedily at the beginning, then gets stuck at iterations 100-200, suggesting it gets trapped in local optima before finally finding better solutions through restarts. When studying the function evaluations, I showed iterations with the corresponding execution time in Fig. \ref{fig: nqueens-iterations-vs-time-vs-size} for different board sizes. \verb|GA| always converges fastest. Both \verb|RHC| and \verb|GA| have demonstrated that as the board size increases, they tend to use more iterations to find the optimal solution, while \verb|SA| always stops at 1000 iterations for all board sizes, which indicates that if the max iteration is set to a larger value, \verb|SA| may have better performance. For each iteration, \verb|GA| takes the longest time to finish, which shows that the individual iteration is most computationally expensive.
+
+\verb|GA| conducts crossover by combining two parent solutions to create offspring. This is non-trivial for N-Queens because there are constraints. As the number of board sizes increases, the constraints increase too. Randomly altering solutions while maintaining validity also requires careful implementation and can be time-consuming. \verb|SA| , on the other hand, is a simple algorithm that only requires the queens to move to new positions. This operation is fast and tends to produce valid configurations. The N-Queens problem has a relatively smooth fitness landscape with many local optima. \verb|SA| 's ability to accept worse solutions based on a temperature schedule allows it to escape local optima. This is particularly beneficial for problems with many local optima.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.4\textwidth]{../figures/nqueens/size_experiment/iterations_vs_time_vs_problem_size.png}
+    \caption{N-Queens: Iterations vs. Execution Time vs. Problem Size (N) with respect to different algorithms: RHC, SA, GA. The problem size is labeled next to the data point varying from 8 to 120.}
+    \label{fig: nqueens-iterations-vs-time-vs-size}
+\end{figure}
+
+\textbf{Performance across Hyperparameters}.
+I have compared hyperparameters in \ref{sec:nqueens-experimental-setup} for each algorithm when $N=56$. It reveals interesting insights for each algorith. For RCH, as the number of restarts increases from 5 to 20, both the fitness and executiont time increases, seen in Fig. \ref{fig: nqueens-fitness-restarts-rhc} and \ref{fig: nqueens-execution-time-restarts-rhc}. The fitness curves show that more restarts lead to a higher likelihood of escaping local optima in Fig. \ref{fig: nqueens-fitness-curves-rhc}. This is because more restart gives RHC more chances to explore different spaces, potentially finding better solutions. 
+\begin{figure*}[htbp]
+\centering
+\begin{subfigure}[b]{0.33\textwidth}
+    \includegraphics[width=\textwidth]{../figures/nqueens/hyperparameter_experiment_size_56/RHC_best_fitness_vs_param_restarts_vs_problem_size.png}
+    \caption{Best fitness vs. number of restarts.}
+    \label{fig: nqueens-fitness-restarts-rhc}
+\end{subfigure}
+\begin{subfigure}[b]{0.32\textwidth}
+    \includegraphics[width=\textwidth]{../figures/nqueens/hyperparameter_experiment_size_56/RHC_execution_time_vs_param_restarts_vs_problem_size.png}
+    \caption{Execution time vs. number of restarts. }
+    \label{fig: nqueens-execution-time-restarts-rhc} 
+\end{subfigure}
+\begin{subfigure}[b]{0.32\textwidth}
+    \includegraphics[width=\textwidth]{../figures/nqueens/hyperparameter_experiment_size_56/RHC_fitness_curves_vs_problem_size.png}
+    \caption{Fitness curves for different restarts.}
+    \label{fig: nqueens-fitness-curves-rhc}
+\end{subfigure}
+\caption{N-Queens: Performance metrics with respect to different numbers of restarts for RHC with $N=56$.}
+\label{fig: nqueens-performance-metrics-rhc}
+\end{figure*}
+For SA, the choice of cooling schedule shows a significant impact on algorithm performance. Fig. \ref{fig: nqueens-fitness-params-sa} shows that the Geometric Decay (\verb|GeomDecay|) schedule consistently outperforms Exponential Decay (\verb|ExpDecay|) and Arithmetic Decay (\verb|ArithDecay|) in terms of fitness score. The fitness gap becomes larger as the maximum attempts increase. \verb|GeomDecay| maintains similar execution times compared to exponential decay, as seen in Fig. \ref{fig: nqueens-execution-time-schedule-sa}. \verb|GeomDecay| reduces the temperature by a constant factor, which provides more gradual cooling, especially in the early stages; therefore, it can explore more of the solution space. Compared with \verb|ExpDecay|, whose temperature reduces rapidly in the early stage, \verb|GeomDecay| is less likely to miss good solutions.
+\verb|ArithDecay| demonstrates the worst performance in terms of both fitness and execution time. This is because the cooling schedule is linear, potentially missing good areas of the solution space due to quick cooling. Increasing the number of maximum attempts can improve the fitness score, but it also increases the execution time, as it allows more chances to explore the solution space. Fig. \ref{fig: nqueens-fitness-curves-sa} shows that \verb|ExpDecay| has the fastest convergence speed, although this rapid convergence may come at the cost of solution quality in complex problems like N-Queens.
+% SA
+\begin{figure*}[htbp]
+\centering
+\begin{subfigure}[b]{0.33\textwidth}
+    \includegraphics[width=\textwidth]{../figures/nqueens/hyperparameter_experiment_size_56/SA_best_fitness_vs_param_max_attempts_vs_problem_size.png}
+    \caption{Best fitness vs. schedules and maximum attempts.}
+    \label{fig: nqueens-fitness-params-sa}
+\end{subfigure}
+\begin{subfigure}[b]{0.32\textwidth}
+    \includegraphics[width=\textwidth]{../figures/nqueens/hyperparameter_experiment_size_56/SA_execution_time_vs_param_max_attempts_vs_problem_size.png}
+    \caption{Execution time vs. schedules and maximum attempts.}
+    \label{fig: nqueens-execution-time-schedule-sa}
+\end{subfigure}
+\begin{subfigure}[b]{0.32\textwidth}
+    \includegraphics[width=\textwidth]{../figures/nqueens/hyperparameter_experiment_size_56/SA_fitness_curves_vs_problem_size.png}
+    \caption{Fitness curves for different schedules with maximum attempts set to 100.}
+    \label{fig: nqueens-fitness-curves-sa}
+\end{subfigure}
+\caption{N-Queens: Performance metrics with respect to different population sizes and mutation probabilities for GA  with $N=56$.}
+\label{fig: nqueens-performance-metrics-sa}
+\end{figure*}
+\begin{figure*}[htbp]
+\centering
+\begin{subfigure}[b]{0.33\textwidth}
+    \includegraphics[width=\textwidth]{../figures/nqueens/hyperparameter_experiment_size_56/GA_best_fitness_vs_param_mutation_prob_vs_problem_size.png}
+    \caption{Best fitness vs. different population sizes and mutation probabilities}
+    \label{fig: nqueens-fitness-population-ga}
+\end{subfigure}
+\begin{subfigure}[b]{0.32\textwidth}
+    \includegraphics[width=\textwidth]{../figures/nqueens/hyperparameter_experiment_size_56/GA_execution_time_vs_param_mutation_prob_vs_problem_size.png}
+    \caption{Execution time vs. population size and mutation probability}
+    \label{fig: nqueens-execution-time-population-ga}
+\end{subfigure}
+\begin{subfigure}[b]{0.32\textwidth}
+    \includegraphics[width=\textwidth]{../figures/nqueens/hyperparameter_experiment_size_56/GA_fitness_curves_vs_problem_size.png}
+    \caption{Fitness Curves for mutation probabilities with population size set to 400.}
+    \label{fig: nqueens-fitness-curves-ga}
+\end{subfigure}
+\caption{N-Queens: Performance metrics with respect to different population sizes and mutation probabilities for GA with $N=56$.}
+\label{fig: nqueens-performance-metrics-ga}
+\end{figure*}
+% GA
+GA shows complex interactions between population size and mutation probability in Fig \ref{fig: nqueens-performance-metrics-ga}. With a fixed mutation probability, the best fitness value and excucation time tend to increase with the population size. It is because with a larger population, the diversity increases therefore providing more chances to find good solutions. However, the excution time also increases for each iteration. The mutation probability provides randomness during crossover. A high mutation rate favors exploration, which may hurt the fitness value and converge rate seen in Fig. \ref{fig: nqueens-fitness-curves-ga}. From Fig \ref{fig: nqueens-fitness-population-ga} and \ref{fig: nqueens-execution-time-population-ga}, I observed that a mutation probability of 0.2 generally yields the best fitness values. This moderate mutation rate allows for sufficient exploration of the solution space without disrupting good solutions too frequently.
+
+In conclusion, the N-Queens problem provides valuable insights into the performance characteristics of \verb|RHC|, \verb|SA| , and \verb|GA|. \verb|GA| consistently finds slightly better solutions when the board size increases but at the cost of much longer execution times, making it less competitive compared to \verb|SA| . \verb|SA|  is the fastest algorithm and has a good balance between solution quality and execution time. \verb|GA| performs best in terms of solution quality but at the cost of longer execution times. \verb|SA| is the fastest algorithm and has a good balance between solution quality and execution time.
+
+\section{Discrete Optimization Problems: Four-Peaks}
+The four-peak problem operates on string bit $x$. The goal is to maximize a fitness function \ref{eq: 4-peak-fitness} based on the consecutive number of 1s in the string and thresholds $T$. 
+\begin{align}
+    f(x, T) = \max(\text{tail}(0, x), \text{head}(1, x)) + R(x, T)\label{eq: 4-peak-fitness}
+\end{align}
+where:
+\begin{itemize}
+    \item $\text{tail}(b, x)$ is the number of trailing $b$'s in $x$;
+    \item $\text{head}(b, x)$ is the number of leading $b$'s in $x$;
+    \item $R(x, T) = n$, if $\text{tail}(0, x) > T$ and $\text{head}(1, x) > T$; and
+    \item $R(x, T) = 0$, otherwise.
+\end{itemize}
+I think the four-peak problem is \textbf{interesting} because of its fintenss landscape. There are four "peaks"
+as the landscape charecterized by the fitness function: two local optimas and two global optima. For quick understanding, suppose the string length is 8, and the threshold $T$ is 2. 
+\begin{itemize}
+    \item Two local optimas: 11111111, 00000000, whose fitness is 8;
+    \item Two global optimas: 11111000, 00011111, whose fitness is 13.
+\end{itemize}
+I have the following \textbf{hypotheses}:
+\begin{itemize}
+    \item placeholder
+    \item placeholder
+\end{itemize}
+
+\subsection{Experimental Setup}
+
+For the Four-Peaks problem, I implemented the experiments using the \texttt{mlrose\_ky} library. The problem was defined using the built-in FourPeaks fitness function, with the goal of maximizing the fitness value. I structured the experiments as follows:
+
+\subsubsection{Size Experiment}
+I tested the algorithms on a range of problem sizes, from 10 to 150 bits, incrementing by 10, and set the thresholds percentage $t\_pct = 0.1$. The experiments were structured as follows:
+
+\begin{itemize}
+    \item Algorithms: RHC, SA, GA, and MIMIC
+    \item Fixed Parameters: maximum iterations = 1000, maximum attempts = 100, random seed = 42, $t\_pct = 0.1$
+    \item Algorithm-specific Parameters: 
+    \begin{itemize}
+        \item RHC with 10 restarts
+        \item SA with exponential decay schedule
+        \item GA with population size = 200, mutation probability = 0.1
+        \item MIMIC with population size = 200, keep percent = 0.2
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Hyperparameter Experiment}
+With a fixed problem size of 50 bits, max iterations = 1000, and random seed = 42, I tested the algorithms with different hyperparameters:
+
+\begin{itemize}
+    \item RHC: Restarts: [5, 10, 20]
+    \item SA: Schedule: [\texttt{ArithDecay()}, \texttt{GeomDecay()}, \texttt{ExpDecay()}]; Maximum attempts: [10, 20, 50, 100]
+    \item GA: Population size: [100, 200, 400]; Mutation probability: [0.1, 0.2, 0.3, 0.4]
+    \item MIMIC: Population size: [100, 200, 400]; Keep percent: [0.1, 0.2, 0.3, 0.4]
+\end{itemize}
+
+For each experiment, I collected data on the best fitness achieved, execution time, number of iterations, and the fitness curve over iterations. 
+
+\subsection{Results}
+\section{Neural Newtork Weight Optimization\label{sec:neural-network}}    
+
+\begin{thebibliography}{00}
+\bibitem{b1} Russell, S. and P. Norvig (2010). Artificial Intelligence: A Modern Approach, 3rd edition. Prentice Hall, New Jersey, USA.
+\end{thebibliography}
+
 \end{document}
