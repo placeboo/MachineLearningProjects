@@ -1,0 +1,36 @@
+output:
+  results_dir: 'results/dataset1/for_hw2'
+dataset:
+  name: 'bank_campaign'
+  file_path: 'data/dataset1/raw/Bank_Campaign.csv'
+  output_dir: 'data/dataset1/processed_feature_reduce'
+  target_column: 'subscribed'
+  rerun: False
+  num_features:
+    - 'age'
+    - 'duration'
+    - 'campaign'
+    - 'previous'
+    - 'emp.var.rate'
+    - 'cons.price.idx'
+    - 'cons.conf.idx'
+    - 'euribor3m'
+    - 'nr.employed'
+  cat_features:
+    - 'education'
+    - 'default'
+    - 'contact'
+    - 'poutcome'
+    - 'pdays'
+  random_state: 17
+
+models:
+  nn:
+    param_grid:
+      'hidden_layer_sizes': [ [15]]
+      'learning_rate': ['adaptive']
+      'learning_rate_init': [0.05]
+cross_validation:
+  n_splits: 5
+
+
