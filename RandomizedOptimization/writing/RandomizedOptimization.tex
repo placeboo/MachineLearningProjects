@@ -14,6 +14,9 @@
 \usepackage{multirow}
 \usepackage{array}
 \usepackage{amsmath,amssymb,amsfonts}
+\usepackage{enumitem}
+\setlist[itemize]{nosep}
+\usepackage[font=small]{caption}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 
@@ -64,20 +67,25 @@ For the N-Queens problem, I implemented the experiments using the \verb|mlrose-k
 
 \begin{figure*}[htbp]
     \centering
-    \begin{subfigure}[b]{0.32\textwidth}
+    \begin{subfigure}[b]{0.24\textwidth}
         \includegraphics[width=\textwidth]{../figures/nqueens/size_experiment/best_fitness_vs_size_vs_problem_size.png}
         \caption{Best Fitness vs. Problem Size}
         \label{fig: nqueens-best-fitness-vs-size}
     \end{subfigure}
-    \begin{subfigure}[b]{0.32\textwidth}
+    \begin{subfigure}[b]{0.24\textwidth}
         \includegraphics[width=\textwidth]{../figures/nqueens/size_experiment/execution_time_vs_size_vs_problem_size.png}
         \caption{Execution Time vs. Problem Size}
         \label{fig: nqueens-execution-time-vs-size}
     \end{subfigure}
-    \begin{subfigure}[b]{0.32\textwidth}
+    \begin{subfigure}[b]{0.24\textwidth}
         \includegraphics[width=\textwidth]{../figures/nqueens/size_experiment/fitness_vs_iteration_40_vs_problem_size.png}
         \caption{Fitness vs. Iteration at size = 40}
         \label{fig: nqueens-fitness-vs-iteration}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \includegraphics[width=\textwidth]{../figures/nqueens/size_experiment/iterations_vs_time_vs_problem_size.png}
+        \caption{Iterations vs. Execution Time vs. Problem Size}
+        \label{fig: nqueens-iterations-vs-time-vs-size}
     \end{subfigure}
     \caption{N-Queens: Performance metrics with respect to different algorithms: RHC, SA, GA.}
     \label{fig: nqueens-performance-metrics}
@@ -87,28 +95,22 @@ Fig. \ref{fig: nqueens-performance-metrics} and Fig. \ref{fig: nqueens-iteration
 
 \verb|GA| conducts crossover by combining two parent solutions to create offspring. This is non-trivial for N-Queens because there are constraints. As the number of board sizes increases, the constraints increase too. Randomly altering solutions while maintaining validity also requires careful implementation and can be time-consuming. \verb|SA| , on the other hand, is a simple algorithm that only requires the queens to move to new positions. This operation is fast and tends to produce valid configurations. The N-Queens problem has a relatively smooth fitness landscape with many local optima. \verb|SA| 's ability to accept worse solutions based on a temperature schedule allows it to escape local optima. This is particularly beneficial for problems with many local optima.
 
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.4\textwidth]{../figures/nqueens/size_experiment/iterations_vs_time_vs_problem_size.png}
-    \caption{N-Queens: Iterations vs. Execution Time vs. Problem Size (N) with respect to different algorithms: RHC, SA, GA. The problem size is labeled next to the data point varying from 8 to 120.}
-    \label{fig: nqueens-iterations-vs-time-vs-size}
-\end{figure}
 
 \textbf{Performance across Hyperparameters}.
 I have compared hyperparameters in \ref{sec:nqueens-experimental-setup} for each algorithm when $N=56$. It reveals interesting insights for each algorith. For RCH, as the number of restarts increases from 5 to 20, both the fitness and executiont time increases, seen in Fig. \ref{fig: nqueens-fitness-restarts-rhc} and \ref{fig: nqueens-execution-time-restarts-rhc}. The fitness curves show that more restarts lead to a higher likelihood of escaping local optima in Fig. \ref{fig: nqueens-fitness-curves-rhc}. This is because more restart gives RHC more chances to explore different spaces, potentially finding better solutions. 
 \begin{figure*}[htbp]
 \centering
-\begin{subfigure}[b]{0.33\textwidth}
+\begin{subfigure}[b]{0.28\textwidth}
     \includegraphics[width=\textwidth]{../figures/nqueens/hyperparameter_experiment_size_56/RHC_best_fitness_vs_param_restarts_vs_problem_size.png}
-    \caption{Best fitness vs. number of restarts.}
+    \small\caption{Best fitness vs. number of restarts.}
     \label{fig: nqueens-fitness-restarts-rhc}
 \end{subfigure}
-\begin{subfigure}[b]{0.32\textwidth}
+\begin{subfigure}[b]{0.28\textwidth}
     \includegraphics[width=\textwidth]{../figures/nqueens/hyperparameter_experiment_size_56/RHC_execution_time_vs_param_restarts_vs_problem_size.png}
     \caption{Execution time vs. number of restarts. }
     \label{fig: nqueens-execution-time-restarts-rhc} 
 \end{subfigure}
-\begin{subfigure}[b]{0.32\textwidth}
+\begin{subfigure}[b]{0.28\textwidth}
     \includegraphics[width=\textwidth]{../figures/nqueens/hyperparameter_experiment_size_56/RHC_fitness_curves_vs_problem_size.png}
     \caption{Fitness curves for different restarts.}
     \label{fig: nqueens-fitness-curves-rhc}
@@ -121,19 +123,19 @@ For SA, the choice of cooling schedule shows a significant impact on algorithm p
 % SA
 \begin{figure*}[htbp]
 \centering
-\begin{subfigure}[b]{0.33\textwidth}
+\begin{subfigure}[b]{0.28\textwidth}
     \includegraphics[width=\textwidth]{../figures/nqueens/hyperparameter_experiment_size_56/SA_best_fitness_vs_param_max_attempts_vs_problem_size.png}
     \caption{Best fitness vs. schedules and maximum attempts.}
     \label{fig: nqueens-fitness-params-sa}
 \end{subfigure}
-\begin{subfigure}[b]{0.32\textwidth}
+\begin{subfigure}[b]{0.28\textwidth}
     \includegraphics[width=\textwidth]{../figures/nqueens/hyperparameter_experiment_size_56/SA_execution_time_vs_param_max_attempts_vs_problem_size.png}
     \caption{Execution time vs. schedules and maximum attempts.}
     \label{fig: nqueens-execution-time-schedule-sa}
 \end{subfigure}
-\begin{subfigure}[b]{0.32\textwidth}
+\begin{subfigure}[b]{0.28\textwidth}
     \includegraphics[width=\textwidth]{../figures/nqueens/hyperparameter_experiment_size_56/SA_fitness_curves_vs_problem_size.png}
-    \caption{Fitness curves for different schedules with maximum attempts set to 100.}
+    \caption{Fitness curves for different schedules with maximum attempts 100.}
     \label{fig: nqueens-fitness-curves-sa}
 \end{subfigure}
 \caption{N-Queens: Performance metrics with respect to different population sizes and mutation probabilities for GA  with $N=56$.}
@@ -141,17 +143,17 @@ For SA, the choice of cooling schedule shows a significant impact on algorithm p
 \end{figure*}
 \begin{figure*}[htbp]
 \centering
-\begin{subfigure}[b]{0.33\textwidth}
+\begin{subfigure}[b]{0.28\textwidth}
     \includegraphics[width=\textwidth]{../figures/nqueens/hyperparameter_experiment_size_56/GA_best_fitness_vs_param_mutation_prob_vs_problem_size.png}
     \caption{Best fitness vs. different population sizes and mutation probabilities}
     \label{fig: nqueens-fitness-population-ga}
 \end{subfigure}
-\begin{subfigure}[b]{0.32\textwidth}
+\begin{subfigure}[b]{0.28\textwidth}
     \includegraphics[width=\textwidth]{../figures/nqueens/hyperparameter_experiment_size_56/GA_execution_time_vs_param_mutation_prob_vs_problem_size.png}
     \caption{Execution time vs. population size and mutation probability}
     \label{fig: nqueens-execution-time-population-ga}
 \end{subfigure}
-\begin{subfigure}[b]{0.32\textwidth}
+\begin{subfigure}[b]{0.28\textwidth}
     \includegraphics[width=\textwidth]{../figures/nqueens/hyperparameter_experiment_size_56/GA_fitness_curves_vs_problem_size.png}
     \caption{Fitness Curves for mutation probabilities with population size set to 400.}
     \label{fig: nqueens-fitness-curves-ga}
@@ -165,7 +167,7 @@ GA shows complex interactions between population size and mutation probability i
 In conclusion, the N-Queens problem provides valuable insights into the performance characteristics of \verb|RHC|, \verb|SA| , and \verb|GA|. \verb|GA| consistently finds slightly better solutions when the board size increases but at the cost of much longer execution times, making it less competitive compared to \verb|SA| . \verb|SA|  is the fastest algorithm and has a good balance between solution quality and execution time. \verb|GA| performs best in terms of solution quality but at the cost of longer execution times. \verb|SA| is the fastest algorithm and has a good balance between solution quality and execution time.
 
 \section{Discrete Optimization Problems: Four-Peaks}
-The four-peak problem operates on string bit $x$. The goal is to maximize a fitness function \ref{eq: 4-peak-fitness} based on the consecutive number of 1s in the string and thresholds $T$. 
+The four-peak problem operates on string bit $x$. The goal is to maximize a fitness function \ref{eq: 4-peak-fitness} based on the consecutive number of 1s in the string and thresholds $T$ \cite{b2}. 
 \begin{align}
     f(x, T) = \max(\text{tail}(0, x), \text{head}(1, x)) + R(x, T)\label{eq: 4-peak-fitness}
 \end{align}
@@ -192,7 +194,7 @@ I have the following \textbf{hypotheses}:
 
 For the Four-Peaks problem, I implemented the experiments using the \texttt{mlrose\_ky} library. The problem was defined using the built-in FourPeaks fitness function, with the goal of maximizing the fitness value. I structured the experiments as follows:
 
-\subsubsection{Size Experiment}
+\subsubsection{Size Experiment \label{sec:four-peaks-size-experiment}}
 I tested the algorithms on a range of problem sizes, from 10 to 150 bits, incrementing by 10, and set the thresholds percentage $t\_pct = 0.1$. The experiments were structured as follows:
 
 \begin{itemize}
@@ -207,7 +209,7 @@ I tested the algorithms on a range of problem sizes, from 10 to 150 bits, increm
     \end{itemize}
 \end{itemize}
 
-\subsubsection{Hyperparameter Experiment}
+\subsubsection{Hyperparameter Experiment \label{sec:four-peaks-hyperparameter-experiment}}
 With a fixed problem size of 50 bits, max iterations = 1000, and random seed = 42, I tested the algorithms with different hyperparameters:
 
 \begin{itemize}
@@ -220,10 +222,132 @@ With a fixed problem size of 50 bits, max iterations = 1000, and random seed = 4
 For each experiment, I collected data on the best fitness achieved, execution time, number of iterations, and the fitness curve over iterations. 
 
 \subsection{Results}
-\section{Neural Newtork Weight Optimization\label{sec:neural-network}}    
+\textbf{Performance across Problem Sizes}. Figure \ref{fig: four-peaks-performance-metrics} illustrates the performance metrics of \verb|RHC|, \verb|SA|, \verb|GA|, and \verb|MIMIC| on the Four-Peaks problem with respect to different bit length which is listed in Sec. \ref{sec:four-peaks-size-experiment}. Contrary to initial expectations, not all algorithms show consistent improvement as problem size increases. \verb|GA| and \verb|MIMIC| demonstrate overall upward trends in fitness, but with some notable fluctuations, such as \verb|GA| having bit length as 100 and 110, \verb|MIMIC| at length 120 and 130. This fructuaion could be due to the incerased complexity of the search space making it temporarily harder for them to find optimal solutions. Despite these fluctuations, \verb|GA| consistently achieves higher fitness values than the other algorithms for most problem sizes. Surprisingly, \verb|RHC| and \verb|SA| best fitness score reduce when length longer than 40 and 60, respectively. \verb|SA| slightly outperforms \verb|RHC|, but neither algorithm shows significant improvement as the problem size grows. This suggests that those two algorithm stuck at the local optima when length increases. Examining execution times in Fig. \ref{fig: four-peaks-execution-time-vs-size} reveals that \verb|MIMIC| is significantly slower than the other algorithms, with execution time increasing exponentially as problem size grows. GA also shows an upward trend in execution time, albeit less pronounced. In contrast, RHC and SA maintain relatively stable and low execution times across all problem sizes. 
+The fitness curves for a problem size of 50 bits in Fig. \ref{fig: four-peaks-best-fitness-vs-size} provide insights into convergence behavior. \verb|MIMIC| demonstrates rapid initial improvement and achieves the highest fitness, followed closely by \verb|GA| . \verb|SA| shows a more gradual improvement and slowest covergence with some fluctuations and gets stuck at lower fitness values, likely due to its ability to temporarily accept worse solutions and struggling to escape local optima in this problem landscape.
+Fig. \ref{fig: four-peaks-iterations-vs-time-vs-size}  illustrates the relationship between iterations, execution time, and problem size. \verb|MIMIC| consistently uses fewer iterations but takes significantly longer per iteration, especially for larger problem sizes. \verb|GA|, \verb|RHC| and \verb|SA| use more iterations as problem size increases, but their execution times remain relatively low.
+
+\begin{figure*}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.24\textwidth}
+        \includegraphics[width=\textwidth]{../figures/fourpeaks/size_experiment/best_fitness_vs_size_vs_problem_size.png}
+        \caption{Best Fitness vs. Problem Size}
+        \label{fig: four-peaks-best-fitness-vs-size}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \includegraphics[width=\textwidth]{../figures/fourpeaks/size_experiment/execution_time_vs_size_vs_problem_size.png}
+        \caption{Execution Time vs. Problem Size}
+        \label{fig: four-peaks-execution-time-vs-size}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \includegraphics[width=\textwidth]{../figures/fourpeaks/size_experiment/fitness_vs_iteration_90_vs_problem_size.png}
+        \caption{Fitness vs. Iteration at size = 50}
+        \label{fig: four-peaks-fitness-vs-iteration}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \includegraphics[width=\textwidth]{../figures/fourpeaks/size_experiment/iterations_vs_time_vs_problem_size.png}
+        \caption{Iterations vs. Execution Time vs. Problem Size}
+        \label{fig: four-peaks-iterations-vs-time-vs-size}
+    \end{subfigure}
+    \caption{Four-Peaks: Performance metrics with respect to different algorithms: RHC, SA, GA, MIMIC.}
+    \label{fig: four-peaks-performance-metrics}
+\end{figure*}
+
+\textbf{Performance across Hyperparameters}.
+Fig. \ref{fig: four-peaks-performance-metrics-rhc} - \ref{fig: four-peaks-performance-metrics-mimic} demonstrate the hyperparameters impact on the performance of each algorithm when $N=50$. Those hyperparameter are mentioned in Sec. \ref{sec:four-peaks-hyperparameter-experiment}.  For \verb|RHC| in Fig. \ref{fig: four-peaks-performance-metrics-rhc}, increasing the number of restarts from 5 to 20 leads to modest improvements in fitness (Fig. \ref{fig: four-peaks-fitness-restarts-rhc}) at the cost of longer execution times (Fig. \ref{fig: four-peaks-execution-time-restarts-rhc}). The fitness curves (Fig. \ref{fig: four-peaks-fitness-curves-rhc}) show that more restarts help \verb|RHC| escape local optima, but the fitness curves for 10 and 20 restarts are nearly identical, suggesting that beyond 10 restarts, RHC doesn't gain any additional benefit in terms of fitness. The lack of improvement with more restarts suggests that \verb|RHC| struggles to escape these local optima, even with increased computational effort. 
+\begin{figure*}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.3\textwidth}
+        \includegraphics[width=\textwidth]{../figures/fourpeaks/hyperparameter_experiment_size_50/RHC_best_fitness_vs_param_restarts_vs_problem_size.png}
+        \caption{Best fitness vs. number of restarts.}
+        \label{fig: four-peaks-fitness-restarts-rhc}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.28\textwidth}
+        \includegraphics[width=\textwidth]{../figures/fourpeaks/hyperparameter_experiment_size_50/RHC_execution_time_vs_param_restarts_vs_problem_size.png}
+        \caption{Execution time vs. number of restarts. }
+        \label{fig: four-peaks-execution-time-restarts-rhc} 
+    \end{subfigure}
+    \begin{subfigure}[b]{0.28\textwidth}
+        \includegraphics[width=\textwidth]{../figures/fourpeaks/hyperparameter_experiment_size_50/RHC_fitness_curves_vs_problem_size.png}
+        \caption{Fitness curves for different restarts.}
+        \label{fig: four-peaks-fitness-curves-rhc}
+    \end{subfigure}
+    \caption{Four-Peaks: Performance metrics with respect to different numbers of restarts for RHC with $N=50$.}
+    \label{fig: four-peaks-performance-metrics-rhc}
+\end{figure*}
+For \verb|SA|, the cooling schedule significantly impacts fitness and execution time, similar to the N-Queens problem. Fig. \ref{fig: four-peaks-fitness-params-sa} shows \verb|GeomDecay| and \verb|ExpDecay| achieve the same better fitness scores across different maximum attempt values, while \verb|GeomDecay| outperforms \verb|ExpDecay| in execution time for all maximum attempt values (Fig. \ref{fig: four-peaks-execution-time-schedule-sa}). \verb|ArithDecay| shows the worst performance and longest execution time. \verb|GeomDecay| and \verb|ExpDecay| have identical fitness curves with max attempts 100 (Fig. \ref{fig: four-peaks-fitness-curves-sa}).
+These results are consistent with the N-Queens findings and share the same explanations.
+%SA
+\begin{figure*}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.28\textwidth}
+        \includegraphics[width=\textwidth]{../figures/fourpeaks/hyperparameter_experiment_size_50/SA_best_fitness_vs_param_max_attempts_vs_problem_size.png}
+        \caption{Best fitness vs. schedules and maximum attempts.}
+        \label{fig: four-peaks-fitness-params-sa}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.28\textwidth}
+        \includegraphics[width=\textwidth]{../figures/fourpeaks/hyperparameter_experiment_size_50/SA_execution_time_vs_param_max_attempts_vs_problem_size.png}
+        \caption{Execution time vs. schedules and maximum attempts.}
+        \label{fig: four-peaks-execution-time-schedule-sa}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.28\textwidth}
+        \includegraphics[width=\textwidth]{../figures/fourpeaks/hyperparameter_experiment_size_50/SA_fitness_curves_vs_problem_size.png}
+        \caption{Fitness curves for different schedules with maximum attempts set to 100.}
+        \label{fig: four-peaks-fitness-curves-sa}
+    \end{subfigure}
+    \caption{Four-Peaks: Performance metrics with respect to different schedules and maximum attempts for SA with $N=50$.}
+    \label{fig: four-peaks-performance-metrics-sa}
+\end{figure*}
+For \verb|GA| in Fig. \ref{fig: four-peaks-performance-metrics-ga}, it again tells a similar story as the N-Queens. Larger population in general yeilds a better fitness score but at the cost of longer execution time seen in Fig. \ref{fig: four-peaks-fitness-population-ga} and Fig. \ref{fig: four-peaks-execution-time-population-ga}. However, the effect of mutation probability is more nuanced. For population sizes of 200 and 400, we observe that the fitness score remains relatively constant for mutation probabilities of 0.2 and above. It may suggest that the higher mutate rates disturb the good solutions too much and hurt the potential gains from increased population size. The fitness curves in Fig. \ref{fig: four-peaks-fitness-curves-ga} demonstrate that larger population size with mutation probability 0.2 has faster convergence and better fitenss score. 
+%GA
+\begin{figure*}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.28\textwidth}
+        \includegraphics[width=\textwidth]{../figures/fourpeaks/hyperparameter_experiment_size_50/GA_best_fitness_vs_param_mutation_prob_vs_problem_size.png}
+        \caption{Best fitness vs. different population sizes and mutation probabilities}
+        \label{fig: four-peaks-fitness-population-ga}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.28\textwidth}
+        \includegraphics[width=\textwidth]{../figures/fourpeaks/hyperparameter_experiment_size_50/GA_execution_time_vs_param_mutation_prob_vs_problem_size.png}
+        \caption{Execution time vs. population size and mutation probability}
+        \label{fig: four-peaks-execution-time-population-ga}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.28\textwidth}
+        \includegraphics[width=\textwidth]{../figures/fourpeaks/hyperparameter_experiment_size_50/GA_fitness_curves_vs_problem_size.png}
+        \caption{Fitness Curves for population sizes with mutation probability set to 0.2.}
+        \label{fig: four-peaks-fitness-curves-ga}
+    \end{subfigure}
+    \caption{Four-Peaks: Performance metrics with respect to different population sizes and mutation probabilities for GA with $N=50$.}
+    \label{fig: four-peaks-performance-metrics-ga}
+\end{figure*}
+\verb|MIMIC|'s performance is impacted on both fitness and execution time, which is showed in Fig. \ref{fig: four-peaks-performance-metrics-mimic}. Fig. \ref{fig: four-peaks-fitness-keep-pct-mimic} reveals that lower keep percentages (0.1 and 0.2) generally result in better fitness values across all population sizes. This trend is particularly pronounced for larger population sizes (200 and 400). The improvement in fitness as the keep percentage decreases suggests that having a more selective population by keeping less top solutions helps to build a better probabilistic model. When keeps the same keep percentage, the larger population size always yields a higher fitness score. However, the execution time increases as the population size grows when having smaller keep percentage ($\leq 0.3$), as shown in Fig. \ref{fig: four-peaks-execution-time-keep-pct-mimic}. The fitness curves in Fig. \ref{fig: four-peaks-fitness-curves-mimic} further illustrate these trends. \verb|MIMIC| with lower keep percentages achieve rapid initial improvements and maintain superiority throughout the optimization process. The curves for higher keep percentages (0.3 and 0.4) show slower improvement and converge to lower fitness values.
+
+In conclusion, the Four Peaks problem underscores the effectiveness of population-based approaches, with \verb|GA| and \verb|MIMIC| demonstrating better performance, especially as problem complexity increases. \verb|GA| emerges as the optimal choice among the four algorithms, balancing solution quality with reasonable execution times. While \verb|MIMIC| achieves high fitness scores, its computational demands are considerable. \verb|SA| and \verb|RHC|, despite their efficiency, show limitations in navigating the Four Peaks' deceptive landscape, particularly for larger problem sizes. The study emphasizes the critical role of hyperparameter tuning, revealing that factors such as population size and mutation rate for \verb|GA|, and keep percentage and population size for \verb|MIMIC|, significantly influence algorithm performance in terms of fitness value and excution time. These findings highlight the importance of algorithm selection and parameter optimization in tackling complex optimization tasks like the Four Peaks problem.
+\begin{figure*}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.28\textwidth}
+        \includegraphics[width=\textwidth]{../figures/fourpeaks/hyperparameter_experiment_size_50/MIMIC_best_fitness_vs_param_keep_pct_vs_problem_size.png}
+        \caption{Best fitness vs. different keep percentages and population sizes.}
+        \label{fig: four-peaks-fitness-keep-pct-mimic}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.28\textwidth}
+        \includegraphics[width=\textwidth]{../figures/fourpeaks/hyperparameter_experiment_size_50/MIMIC_execution_time_vs_param_keep_pct_vs_problem_size.png}
+        \caption{Execution time vs. keep percentages and population sizes.}
+        \label{fig: four-peaks-execution-time-keep-pct-mimic}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.28\textwidth}
+        \includegraphics[width=\textwidth]{../figures/fourpeaks/hyperparameter_experiment_size_50/MIMIC_fitness_curves_vs_problem_size.png}
+        \caption{Fitness Curves for keep percentages with population size set to 400.}
+        \label{fig: four-peaks-fitness-curves-mimic}
+    \end{subfigure}
+    \caption{Four-Peaks: Performance metrics with respect to different keep percentages for MIMIC with $N=50$.}
+    \label{fig: four-peaks-performance-metrics-mimic}
+\end{figure*}
+
+\section{Neural Newtork Weight Optimization\label{sec:neural-network}}  
 
 \begin{thebibliography}{00}
 \bibitem{b1} Russell, S. and P. Norvig (2010). Artificial Intelligence: A Modern Approach, 3rd edition. Prentice Hall, New Jersey, USA.
+\bibitem{b2} De Bonet, J., C. Isbell, and P. Viola (1997). MIMIC: Finding Optima by Estimating Probability Densities. In Advances in Neural Information Processing Systems (NIPS) 9, pp. 424–430.
 \end{thebibliography}
 
 \end{document}
