@@ -133,11 +133,6 @@ def run_nn_experiment(X_train, y_train, X_test, y_test, hidden_nodes: List[int],
     # Split training data into train and validation sets
     X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=val_size, random_state=random_state)
 
-    # Ensure labels are binary (0 and 1)
-    y_train = (y_train + 1) // 2
-    y_val = (y_val + 1) // 2
-    y_test = (y_test + 1) // 2
-
     for alg in algorithms:
         print(f'Running experiments for algorithm {alg}')
         alg_params = hyperparameters[alg]
@@ -151,7 +146,8 @@ def run_nn_experiment(X_train, y_train, X_test, y_test, hidden_nodes: List[int],
 
             nn_model = mlrose.NeuralNetwork(hidden_nodes=hidden_nodes, activation='relu',
                                             algorithm=alg, bias=True, is_classifier=True,
-                                            learning_rate=0.001, early_stopping=True,
+                                            learning_rate=0.06, early_stopping=True,
+                                            max_iters=1000,
                                             clip_max=5, curve=True, **kwargs)
 
             nn_model.fit(X_train, y_train)
@@ -196,7 +192,7 @@ def run_nn_experiment(X_train, y_train, X_test, y_test, hidden_nodes: List[int],
             if val_metrics['accuracy'] > best_val_score:
                 print(f'New best model found for {alg} with params {param_combination}')
                 best_val_score = val_metrics['accuracy']
-                best_model = (nn_model, param_combination, train_metrics, val_metrics, test_metrics, fitness_values)
+                best_model = (nn_model, param_combination, train_metrics, val_metrics, test_metrics, fitness_values, execution_time)
 
         # Store best model for the algorithm
         best_models[alg] = best_model
