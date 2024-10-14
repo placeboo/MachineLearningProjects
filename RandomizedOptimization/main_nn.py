@@ -57,24 +57,41 @@ if __name__ == "__main__":
     data_dir = 'data/spam'
     hidden_nodes = [100]
 
-    #vDefine hyperparameters to explore
+    # #Define hyperparameters to explore
+    # hyperparameters = {
+    #     'random_hill_climb': {
+    #         'restarts': [5, 10, 20],
+    #         'max_iters': [10, 50, 100, 200, 500]
+    #     },
+    #     'simulated_annealing': {
+    #         'schedule': [mlrose.GeomDecay(), mlrose.ArithDecay(), mlrose.ExpDecay()],
+    #         'max_attempts': [10, 20, 50],
+    #          'max_iters': [10, 50, 100, 200, 500]
+    #     },
+    #     'genetic_alg': {
+    #         'pop_size': [100, 200, 400],
+    #         'mutation_prob': [0.1, 0.2, 0.3],
+    #         'max_attempts': [10, 20, 50],
+    #          'max_iters': [10, 50, 100, 200, 500]
+    #     }
+    # }
+
     hyperparameters = {
         'random_hill_climb': {
             'restarts': [5, 10, 20],
-            'max_iters': [10, 50, 100, 200, 500]
+            'max_attempts': [100]
         },
         'simulated_annealing': {
             'schedule': [mlrose.GeomDecay(), mlrose.ArithDecay(), mlrose.ExpDecay()],
-            'max_attempts': [10, 20, 50],
-             'max_iters': [10, 50, 100, 200, 500]
+            'max_attempts': [10, 20, 50, 100],
         },
         'genetic_alg': {
             'pop_size': [100, 200, 400],
-            'mutation_prob': [0.1, 0.2, 0.3],
-            'max_attempts': [10, 20, 50],
-             'max_iters': [10, 50, 100, 200, 500]
+            'mutation_prob': [0.1, 0.2, 0.3, 0.4],
+            'max_attempts': [100],
         }
     }
+
 
 
     results_dir = 'results/nn/spam'
