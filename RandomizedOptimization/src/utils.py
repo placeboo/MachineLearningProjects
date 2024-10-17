@@ -39,13 +39,13 @@ def set_plot_style():
     plt.style.use('default')
     sns.set_style("whitegrid")
     plt.rcParams.update({
-        'figure.figsize': (3.5, 2.5),  # Single column width for IEEE
-        'font.size': 8,
-        'axes.labelsize': 9,
-        'axes.titlesize': 10,
-        'xtick.labelsize': 8,
-        'ytick.labelsize': 8,
-        'legend.fontsize': 6,
+        'figure.figsize': (4, 3),  # Single column width for IEEE
+        'font.size': 12,
+        'axes.labelsize': 14,
+        'axes.titlesize': 14,
+        'xtick.labelsize': 13,
+        'ytick.labelsize': 13,
+        'legend.fontsize': 12,
         'figure.facecolor': 'white',
         'text.usetex': True,
         'font.family': 'serif',
@@ -86,7 +86,7 @@ def plot_performance_vs_size(results: pd.DataFrame, metric: str, output_dir: str
     ylabel = 'Best Fitness' if metric == 'best_fitness' else 'Execution Time (seconds)'
     plt.ylabel(ylabel)
     title = 'Best Fitness vs Problem Size' if metric == 'best_fitness' else 'Execution Time vs Problem Size'
-    plt.title(title)
+    #plt.title(title)
     plt.legend(title='Algorithm', loc='best', frameon=True, fancybox=False, edgecolor='black')
     plt.tight_layout()
 
@@ -117,7 +117,7 @@ def plot_convergence_vs_size(results: pd.DataFrame, output_dir: str = 'plots'):
 
     plt.xlabel('Problem Size')
     plt.ylabel('Iterations to 95% Max Fitness')
-    plt.title('Convergence Speed vs Problem Size')
+    #plt.title('Convergence Speed vs Problem Size')
     plt.legend(title='Algorithm', loc='best', frameon=True, fancybox=False, edgecolor='black')
     plt.tight_layout()
 
@@ -146,7 +146,7 @@ def plot_fitness_vs_iteration(results: pd.DataFrame, output_dir: str = 'plots'):
 
         plt.xlabel('Iteration')
         plt.ylabel('Best Fitness')
-        plt.title(f'Best Fitness vs Iteration - {algorithm}')
+        #plt.title(f'Best Fitness vs Iteration - {algorithm}')
         plt.legend(title='Algorithm', loc='best', frameon=True, fancybox=False, edgecolor='black')
         plt.tight_layout()
 
@@ -172,7 +172,7 @@ def plot_iterations_vs_time(results: pd.DataFrame, output_dir: str = 'plots'):
 
     plt.xlabel('Execution Time (seconds)')
     plt.ylabel('Iterations')
-    plt.title('Iterations vs Execution Time')
+    #plt.title('Iterations vs Execution Time')
     plt.legend(title='Algorithm')
     plt.legend(title='Algorithm', loc='best', frameon=True, fancybox=False, edgecolor='black')
 
@@ -197,7 +197,7 @@ def plot_fitness_vs_iteration_wsize(results, size, fig_dir):
             plt.plot(fitness_values, label=f'{algo}', alpha=0.6)
     plt.xlabel('Iteration')
     plt.ylabel('Fitness')
-    plt.title(f'Fitness vs Iteration - Size {size}')
+    #plt.title(f'Fitness vs Iteration - Size {size}')
     plt.legend(loc='best', frameon=True, fancybox=False, edgecolor='black')
     save_plot(f'fitness_vs_iteration_{size}', fig_dir)
 
@@ -219,7 +219,7 @@ def plot_best_model_comparison(best_results: pd.DataFrame, output_dir: str = 'pl
 
     plt.xlabel('Algorithm')
     plt.ylabel('Accuracy')
-    plt.title('Best Model Performance Comparison')
+    #plt.title('Best Model Performance Comparison')
     plt.xticks(x, ['RHC', 'SA', 'GA'])
     plt.legend(loc='best', frameon=True, fancybox=False, edgecolor='black')
     # Add value labels on top of each bar
@@ -248,7 +248,7 @@ def plot_nn_fitness_curves(best_results_df: pd.DataFrame, output_dir: str = 'plo
 
     plt.xlabel('Iteration')
     plt.ylabel('Fitness')
-    plt.title('Fitness Curves for Best Models')
+    #plt.title('Fitness Curves for Best Models')
     plt.legend(title='Algorithm')
     plt.tight_layout()
     plt.legend(loc='best', frameon=True, fancybox=False, edgecolor='black')
@@ -300,7 +300,7 @@ def plot_parameter_vs_metric(df, algorithm, primary_param, metric, secondary_par
         else:
             sns.barplot(data=alg_df, x=primary_param, y=metric, alpha=0.6)
 
-    plt.title(f'{algorithm}: {metric} vs {primary_param.replace("param_", "")}')
+    #plt.title(f'{algorithm}: {metric} vs {primary_param.replace("param_", "")}')
     plt.xlabel(primary_param.replace("param_", "").replace("_", " ").title())
     plt.ylabel(metric.replace("_", " ").title())
 
@@ -336,7 +336,7 @@ def plot_fitness_curve_with_params(df, algorithm, params, output_dir):
             fitness_values = parse_fitness_curve(row['fitness_curve'])
             plt.plot(fitness_values, label=param_combo, alpha=0.6)
 
-    plt.title(f'{algorithm}: Fitness Curves for Different Parameters')
+    #plt.title(f'{algorithm}: Fitness Curves for Different Parameters')
     plt.xlabel('Iterations')
     plt.ylabel('Fitness')
     plt.legend(title='Parameter', loc='best', frameon=True, fancybox=False, edgecolor='black')
