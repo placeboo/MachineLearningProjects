@@ -192,7 +192,7 @@ def run_nn_experiment(X_train, y_train, X_test, y_test, hidden_nodes: List[int],
             if val_metrics['accuracy'] > best_val_score:
                 print(f'New best model found for {alg} with params {param_combination}')
                 best_val_score = val_metrics['accuracy']
-                best_model = (nn_model, param_combination, train_metrics, val_metrics, test_metrics, fitness_values, execution_time)
+                best_model = (nn_model, param_combination, train_metrics, val_metrics, test_metrics, fitness_values)
 
         # Store best model for the algorithm
         best_models[alg] = best_model
