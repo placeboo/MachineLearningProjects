@@ -63,7 +63,7 @@ def save_plot(plot_type: str, output_dir: str = 'plots'):
     os.makedirs(output_dir, exist_ok=True)
     filename = f"{plot_type}_vs_problem_size.png"
     filepath = os.path.join(output_dir, filename)
-    plt.savefig(filepath, dpi=300, bbox_inches='tight')
+    plt.savefig(filepath, dpi=600, bbox_inches='tight')
     print(f"Plot saved as {filepath}")
     plt.close()
 
