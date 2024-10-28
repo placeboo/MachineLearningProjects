@@ -1,5 +1,14 @@
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score, calinski_harabasz_score
+from sklearn.metrics import (
+    silhouette_score,
+    calinski_harabasz_score,
+    adjusted_rand_score,
+    normalized_mutual_info_score,
+    adjusted_mutual_info_score,
+    homogeneity_score,
+    completeness_score,
+    v_measure_score
+)
 import numpy as np
 from typing import Dict, Tuple
 
@@ -33,3 +42,28 @@ class KMeansCluster:
         distances = self.model.transform(X) # distance to all centroids
         labels = self.model.predict(X).reshape(-1, 1) # cluster assignment
         return np.hstack([distances, labels])
+
+    def evaluate_with_ground_truth(self, y_true: np.ndarray, labels: np.ndarray) -> Dict:
+        """
+        Evaluate clustering results using ground truth labels
+        Only call this after choosing optimal k using unsupervised metrics
+
+        Parameters:
+        -----------
+        y_true : np.ndarray
+            Ground truth labels
+        labels : np.ndarray
+            Cluster assignments
+
+        Returns:
+        --------
+        Dict : Dictionary of evaluation metrics
+        """
+        return {
+            'adjusted_rand': adjusted_rand_score(y_true, labels),
+            'normalized_mutual_info': normalized_mutual_info_score(y_true, labels),
+            'adjusted_mutual_info': adjusted_mutual_info_score(y_true, labels),
+            'homogeneity': homogeneity_score(y_true, labels),
+            'completeness': completeness_score(y_true, labels),
+            'v_measure': v_measure_score(y_true, labels)
+        }

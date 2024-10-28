@@ -47,3 +47,63 @@ class ClusteringExperiment:
             em_metircs['calinski_harabasz_score'].append(em_metrics['calinski_harabasz_score'])
 
         return pd.DataFrame(kmeans_metircs), pd.DataFrame(em_metircs)
+
+
+    def evaluate_clustering(self, X: np.ndarray, y: np.ndarray, optimal_k: Dict) -> Dict:
+        """
+        Evaluate clustering results using ground truth labels
+        Should only be called after optimal k is chosen using unsupervised metrics
+        Args:
+            X (np.ndarray): Data
+            y (np.ndarray): Ground truth labels
+            optimal_k (Dict): Dictionary of optimal k for KMeans and EM {kmeans: int, em: int}
+        Returns:
+            Dict: Dictionary of evaluation metrics for KMeans and EM
+        """
+        results = {}
+
+        # KMeans
+        kmeans_labels = self.kmeans.fit(X, optimal_k['kmeans'])
+        kmeans_metrics = self.kmeans.evaluate_with_ground_truth(y, kmeans_labels)
+        results['kmeans'] = kmeans_metrics
+
+        # EM
+        em_labels = self.em.fit(X, optimal_k['em'])
+        em_metrics = self.em.evaluate_with_ground_truth(y, em_labels)
+        results['em'] = em_metrics
+
+        return results
+
+    def analyze_cluster_composition(self, labels: np.ndarray, y_true: np.ndarray) -> pd.DataFrame:
+        """
+        Analyze the composition of each cluster in terms of true labels
+
+        Parameters:
+        -----------
+        labels : np.ndarray
+            Cluster assignments
+        y_true : np.ndarray
+            Ground truth labels
+
+        Returns:
+        --------
+        pd.DataFrame : Cluster composition analysis
+        """
+        # Create cross-tabulation of clusters and true labels
+        df = pd.DataFrame({
+            'Cluster': labels,
+            'True_Label': y_true
+        })
+
+        # Calculate composition percentages
+        composition = pd.crosstab(
+            df['Cluster'],
+            df['True_Label'],
+            normalize='index'
+        ) * 100
+
+        # Add cluster sizes
+        cluster_sizes = df['Cluster'].value_counts().sort_index()
+        composition['Size'] = cluster_sizes
+
+        return composition
