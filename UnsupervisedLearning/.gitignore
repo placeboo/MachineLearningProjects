@@ -1,0 +1,21 @@
+# plots
+*.png
+*.pdf
+*.eps
+
+# data
+*.csv
+*.json
+
+# latex
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.gz
+*.toc
+*.bbl
+*.blg
+*.bcf
