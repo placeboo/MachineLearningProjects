@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import os
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict
+import numpy as np
 
 def set_plot_style():
     plt.style.use('default')
@@ -56,6 +57,17 @@ def get_algorithm_style(algorithm: str) -> Tuple[str, str, str]:
     }
     return styles.get(algorithm.lower(), ('o-', '#333333', algorithm))
 
+def get_supervise_metrics(metric: str) -> str:
+    """Get supervised metrics"""
+    metrics = {
+        'adjusted_rand': 'ARI',
+        'normalized_mutual_info': 'NMI',
+        'adjusted_mutual_info': 'AMI',
+        'homogeneity': 'Homogeneity',
+        'completeness': 'Completeness',
+        'v_measure': 'V-Measure'
+    }
+    return metrics.get(metric, metric.replace('_', ' ').title())
 
 def plot_metrics_vs_cluster(
         df: pd.DataFrame,
@@ -152,12 +164,57 @@ def plot_metrics_vs_cluster(
 
     # Add grid
     plt.grid(True, linestyle='--', alpha=0.7)
-    # show
-    plt.show()
     # Save plot
     output_dir = f'{output_dir}/{dataset}/{experiment}'
     filename = filename or f'{metric_col}_vs_{k_col}_{algorithms_str}'
     filename = filename.replace(' ', '_').lower()
     save_plot(output_dir, filename)
+    plt.show()
+
+
+def plot_cluster_evaluation(
+        eval_results: Dict,
+        dataset: str = 'dataset1',
+        experiment: str = 'experiment1'):
+
+    set_plot_style()
+    metrics = list(eval_results['kmeans'].keys())
+    algorithms = list(eval_results.keys())
+
+    # prepare data
+    data = {
+        'Metric': [],
+        'Algorithm': [],
+        'Score': []
+    }
+
+    for algo in algorithms:
+        for metric in metrics:
+            data['Metric'].append(metric)
+            data['Algorithm'].append(algo)
+            data['Score'].append(eval_results[algo][metric])
+
+    df = pd.DataFrame(data)
+    # plot
+    bar_width = 0.35
+    index = np.arange(len(metrics))
+
+    plt.bar(index, df[df['Algorithm'] == 'kmeans']['Score'],
+            bar_width, label='K-Means')
+    plt.bar(index + bar_width, df[df['Algorithm'] == 'em']['Score'],
+            bar_width, label='EM')
+
+    plt.xlabel('Metrics')
+    plt.ylabel('Score')
+    metrics = [get_supervise_metrics(metric) for metric in metrics]
+    #plt.title('Clustering Evaluation Metrics Comparison')
+    plt.xticks(index + bar_width / 2, metrics, rotation=45, ha='right')
+    plt.legend(loc='best', frameon=True, fancybox=False, edgecolor='black')
+    plt.tight_layout()
+
+    output_dir = f'figs/{dataset}/{experiment}'
+    filename = 'clustering_evaluation_metrics_comparison'
+    save_plot(output_dir, filename)
+    plt.show()
 
 
