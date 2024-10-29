@@ -64,8 +64,7 @@ def get_supervise_metrics(metric: str) -> str:
         'normalized_mutual_info': 'NMI',
         'adjusted_mutual_info': 'AMI',
         'homogeneity': 'Homogeneity',
-        'completeness': 'Completeness',
-        'v_measure': 'V-Measure'
+        'completeness': 'Completeness'
     }
     return metrics.get(metric, metric.replace('_', ' ').title())
 
@@ -79,7 +78,7 @@ def plot_metrics_vs_cluster(
         y_label: Optional[str] = None,
         y_lim: Optional[Tuple[float, float]] = None,
         legend_loc: str = 'best',
-        marker_size: int = 6,
+        marker_size: int = 3,
         line_width: float = 1.5,
         output_dir: str = 'figs',
         dataset: str = 'dataset1',

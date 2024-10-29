@@ -1,8 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from typing import Tuple, List, Dict
-import logging
-
 import pandas as pd
 
 from src.clustering.kmeans import KMeansCluster
