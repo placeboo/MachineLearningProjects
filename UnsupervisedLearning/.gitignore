@@ -6,6 +6,7 @@
 # data
 *.csv
 *.json
+*.pkl
 
 # latex
 *.aux
@@ -19,3 +20,4 @@
 *.bbl
 *.blg
 *.bcf
+
