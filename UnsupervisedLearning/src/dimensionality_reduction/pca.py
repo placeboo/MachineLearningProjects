@@ -30,3 +30,4 @@ class PCAReducer:
             raise ValueError("Model not fitted")
 
         return self.model.inverse_transform(X_transformed)
+
