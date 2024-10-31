@@ -217,3 +217,202 @@ def plot_cluster_evaluation(
     plt.show()
 
 
+def plot_2d_projection(
+        X_transformed: np.ndarray,
+        y: np.ndarray,
+        output_dir: str = 'figs',
+        dataset: str = 'dataset1',
+        experiment: str = 'experiment1',
+        filename: Optional[str] = None,
+        algo_name: Optional[str] = None,
+        sample_size: int = 1000,
+        random_state: int = 17
+        ):
+    """
+        Plot 2D projection of data with sampling and binary label handling.
+
+        Parameters:
+        -----------
+        X_transformed : np.ndarray
+            Transformed data (n_samples, n_components)
+        y : np.ndarray
+            Labels
+        output_dir : str
+            Output directory for saving plots
+        dataset : str
+            Dataset name
+        experiment : str
+            Experiment name
+        filename : Optional[str]
+            Custom filename for the plot
+        algo_name : Optional[str]
+            Algorithm name for default filename
+        sample_size : Optional[int]
+            Number of points to sample. If None, use all points
+        random_state : int
+            Random state for reproducibility
+    """
+    set_plot_style()
+    # Sample data if needed
+    if sample_size and len(X_transformed) > sample_size:
+        np.random.seed(random_state)
+        indices = np.random.choice(len(X_transformed), sample_size, replace=False)
+        X_transformed = X_transformed[indices]
+        y = y[indices]
+    # Handle binary labels
+    unique_labels = np.unique(y)
+    if len(unique_labels) == 2:
+        # Create a scatter plot for each class
+        colors = ['#2ecc71', '#e74c3c']  # Green and Red
+        labels = ['Class 0', 'Class 1']
+
+        for i, (label, color) in enumerate(zip(unique_labels, colors)):
+            mask = y == label
+            plt.scatter(X_transformed[mask, 0],
+                        X_transformed[mask, 1],
+                        c=color,
+                        label=labels[i],
+                        alpha=0.6,
+                        edgecolors='white',
+                        linewidth=0.5)
+
+        plt.legend()
+    else:
+        # Multi-class case
+        scatter = plt.scatter(X_transformed[:, 0],
+                              X_transformed[:, 1],
+                              c=y,
+                              cmap='viridis',
+                              alpha=0.6,
+                              edgecolors='white',
+                              linewidth=0.5)
+        plt.colorbar(scatter, label='Class')
+
+    # Labels and title
+    plt.xlabel('First Component')
+    plt.ylabel('Second Component')
+    plt.legend(loc='best', frameon=True, fancybox=False, edgecolor='black')
+    plt.tight_layout()
+    # Make the plot more visually appealing
+    ax = plt.gca()
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    filename = filename or f'2d_projection_{algo_name}'
+    output_dir = f'{output_dir}/{dataset}/{experiment}'
+    save_plot(output_dir, filename)
+
+
+def plot_3d_projection(
+        X_transformed: np.ndarray,
+        y: np.ndarray,
+        output_dir: str = 'figs',
+        dataset: str = 'dataset1',
+        experiment: str = 'experiment1',
+        filename: Optional[str] = None,
+        algo_name: Optional[str] = None,
+        sample_size: Optional[int] = 1000,
+        random_state: int = 42,
+        elev: int = 30,
+        azim: int = 45):
+    """
+    Plot 3D projection of data with sampling and binary label handling.
+
+    Parameters:
+    -----------
+    X_transformed : np.ndarray
+        Transformed data (n_samples, n_components)
+    y : np.ndarray
+        Labels
+    output_dir : str
+        Output directory for saving plots
+    dataset : str
+        Dataset name
+    experiment : str
+        Experiment name
+    filename : Optional[str]
+        Custom filename for the plot
+    algo_name : Optional[str]
+        Algorithm name for default filename
+    sample_size : Optional[int]
+        Number of points to sample. If None, use all points
+    random_state : int
+        Random state for reproducibility
+    elev : int
+        Elevation angle for 3D plot
+    azim : int
+        Azimuth angle for 3D plot
+    """
+    if X_transformed.shape[1] < 3:
+        raise ValueError("Transformed data must have at least 3 dimensions")
+
+    set_plot_style()
+    fig = plt.figure(figsize=(6, 4))
+    ax = fig.add_subplot(111, projection='3d')
+
+    # Sample data if needed
+    if sample_size and len(X_transformed) > sample_size:
+        np.random.seed(random_state)
+        indices = np.random.choice(len(X_transformed), sample_size, replace=False)
+        X_transformed = X_transformed[indices]
+        y = y[indices]
+
+    # Handle binary labels
+    unique_labels = np.unique(y)
+    if len(unique_labels) == 2:
+        # Create a scatter plot for each class
+        colors = ['#2ecc71', '#e74c3c']  # Green and Red
+        labels = ['Class 0', 'Class 1']
+
+        for i, (label, color) in enumerate(zip(unique_labels, colors)):
+            mask = y == label
+            ax.scatter(X_transformed[mask, 0],
+                       X_transformed[mask, 1],
+                       X_transformed[mask, 2],
+                       c=color,
+                       label=labels[i],
+                       alpha=0.6,
+                       edgecolors='white',
+                       linewidth=0.5)
+
+        ax.legend()
+    else:
+        # Multi-class case
+        scatter = ax.scatter(X_transformed[:, 0],
+                             X_transformed[:, 1],
+                             X_transformed[:, 2],
+                             c=y,
+                             cmap='viridis',
+                             alpha=0.6,
+                             edgecolors='white',
+                             linewidth=0.5)
+        fig.colorbar(scatter, label='Class', ax=ax)
+
+    # Set the viewing angle
+    ax.view_init(elev=elev, azim=azim)
+
+    # Labels and title
+    ax.set_xlabel('First Component')
+    ax.set_ylabel('Second Component')
+    ax.set_zlabel('Third Component')
+    #plt.title(f'3D Projection - {algo_name.upper() if algo_name else ""}')
+    plt.legend(loc='best', frameon=True, fancybox=False, edgecolor='black')
+    plt.tight_layout()
+    # Add grid
+    ax.grid(True, linestyle='--', alpha=0.3)
+
+    # Make the plot more visually appealing
+    # Make panes slightly transparent
+    ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.9))
+    ax.yaxis.set_pane_color((1.0, 1.0, 1.0, 0.9))
+    ax.zaxis.set_pane_color((1.0, 1.0, 1.0, 0.9))
+
+    # Make grid lines lighter
+    ax.xaxis._axinfo["grid"]['color'] = (0.9, 0.9, 0.9, 0.1)
+    ax.yaxis._axinfo["grid"]['color'] = (0.9, 0.9, 0.9, 0.1)
+    ax.zaxis._axinfo["grid"]['color'] = (0.9, 0.9, 0.9, 0.1)
+
+    # Save plot
+    filename = filename or f'3d_projection_{algo_name}'
+    output_dir = f'{output_dir}/{dataset}/{experiment}'
+    save_plot(output_dir, filename)

@@ -42,6 +42,8 @@ class DimensionalityReductionExperiment:
             'kurtosis_values': [],
             'mean_kurtosis': [],
             'abs_mean_kurtosis': [],
+            'explained_variance_ratio': [],
+            'cumulative_explained_variance': [],
             'n_iter': []
         }
 
@@ -53,6 +55,8 @@ class DimensionalityReductionExperiment:
             metrics['kurtosis_values'].append(ica_metrics['kurtosis_values'])
             metrics['mean_kurtosis'].append(ica_metrics['mean_kurtosis'])
             metrics['abs_mean_kurtosis'].append(ica_metrics['abs_mean_kurtosis'])
+            metrics['explained_variance_ratio'].append(ica_metrics['explained_variance_ratio'])
+            metrics['cumulative_explained_variance'].append(ica_metrics['cumulative_explained_variance'])
             metrics['n_iter'].append(ica_metrics['n_iter'])
 
             transformed_data[n] = X_transformed
