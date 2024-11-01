@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pickle
 import json
+import pandas as pd
 
 
 def load_processed_data(output_dir):
@@ -20,6 +21,9 @@ def save_csv(df, output_dir, filename):
     file_path = file_path + '.csv'
     df.to_csv(file_path, index=False)
     print(f"Dataframe saved at {file_path}")
+
+def load_csv(file_path):
+    return pd.read_csv(file_path)
 
 
 def save_pickle(data, output_dir, filename):

@@ -65,6 +65,5 @@ class EMCluster:
             'normalized_mutual_info': normalized_mutual_info_score(y_true, labels),
             'adjusted_mutual_info': adjusted_mutual_info_score(y_true, labels),
             'homogeneity': homogeneity_score(y_true, labels),
-            'completeness': completeness_score(y_true, labels),
-            'v_measure': v_measure_score(y_true, labels)
+            'completeness': completeness_score(y_true, labels)
         }

@@ -10,6 +10,9 @@ from src.dimensionality_reduction.ica import ICAReducer
 from src.dimensionality_reduction.random_projection import RandomProjectionReducer
 from src.experiments.experiment1_clustering import ClusteringExperiment
 
+from src.clustering.kmeans import KMeansCluster
+from src.clustering.em import EMCluster
+
 class CombinedExperiment:
     def __init__(self, random_state: int=17):
         self.random_state = random_state
@@ -128,5 +131,52 @@ def find_optimal_combinations(kmeans_metrics_df: pd.DataFrame, em_metrics_df: pd
     return optimal_configs
 
 
+def evaluate_clustering(transformed_data: Dict,
+                        y: np.ndarray,
+                        optimal_configs: Dict
+                        ) -> Dict:
+    """
+    Evaluate clustering results using ground truth labels
+
+    Parameters:
+    -----------
+    transformed_data : Dict
+        Dictionary of transformed data with structure {method: {n_components: X_transformed}}
+    y : np.ndarray
+        Ground truth labels
+    optimal_configs : Dict
+        Dictionary of optimal configurations for KMeans and EM with structure {
+            'pca_kmeans': {'dr_method': str, 'n_components': int, 'k': int, 'score': float},
+            'ica_em': {'dr_method': str, 'n_components': int, 'k': int, 'score': float},
+            ...
+        }
+
+    Returns:
+    --------
+    Dict
+        Dictionary of evaluation metrics for KMeans and EM with structure
+        {
+            'pca_kmeans': {'metrics': Dict, 'composition': pd.DataFrame},
+            'ica_em': {'metrics': Dict, 'composition': pd.DataFrame},
+    """
+    results = {}
+
+    for key, config in optimal_configs.items():
+        method, algo = key.split('_')
+        X_transformed = transformed_data[method][config['n_components']]
+        if algo == 'kmeans':
+            model = KMeansCluster()
+        else:
+            model = EMCluster()
+
+        labels = model.fit(X_transformed, config['k'])
+        metrics = model.evaluate_with_ground_truth(y, labels)
+        composition = pd.crosstab(labels, y, normalize='index') * 100
+        results[key] = {
+            'metrics': metrics,
+            'composition': composition
+        }
+
+    return results
 
 
