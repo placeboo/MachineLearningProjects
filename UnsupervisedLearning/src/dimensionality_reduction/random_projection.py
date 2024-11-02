@@ -12,6 +12,12 @@ class RandomProjectionReducer:
         self.model = GaussianRandomProjection(n_components=n_components, random_state=self.random_state)
         return self.model.fit_transform(X)
 
+    def transform(self, X: np.ndarray) -> np.ndarray:
+        """Transform the data using the fitted model."""
+        if self.model is None:
+            raise ValueError("Model not fitted")
+        return self.model.transform(X)
+
     def get_metrics(self, X: np.ndarray, X_transformed: np.ndarray) -> Dict:
         """Get Random Projection metrics."""
         if self.model is None:

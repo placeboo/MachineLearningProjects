@@ -14,6 +14,13 @@ class ICAReducer:
         self.model = FastICA(n_components=n_components, random_state=self.random_state, max_iter=self.max_iter)
         return self.model.fit_transform(X)
 
+    def transform(self, X: np.ndarray) -> np.ndarray:
+        """Transform the data using the fitted model."""
+        if self.model is None:
+            raise ValueError("Model not fitted")
+        return self.model.transform(X)
+
+
     def get_metrics(self, X_transformed: np.ndarray) -> Dict:
         """Get ICA metrics."""
         if self.model is None:
