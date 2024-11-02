@@ -8,19 +8,12 @@ import time
 class DimensionalityReductionNN:
     def __init__(self, random_state: int=17):
         self.random_state = random_state
-        self.nn = MLPClassifier(random_state=self.random_state, max_iter=1000)
+        self.nn = MLPClassifier(random_state=self.random_state, max_iter=1000, learning_rate='adaptive')
         self.best_nn = None
         self.best_params = None
-        self.training_time = None
+        self.cv_results = None
 
-    @staticmethod
-    def fit_transform_dr(dr_model: Any, X_train: np.ndarray, X_test: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-        """Fit and transform the data using a dimensionality reduction model."""
-        X_train_transformed = dr_model.fit_transform(X_train)
-        X_test_transformed = dr_model.transform(X_test)
-        return X_train_transformed, X_test_transformed
-
-    def train(self, X_train: np.ndarray, y_train: np.ndarray, param_grid: Dict):
+    def train_tuning(self, X_train: np.ndarray, y_train: np.ndarray, param_grid: Dict):
         """Train the neural network.
 
         Parameters:
@@ -32,16 +25,12 @@ class DimensionalityReductionNN:
         param_grid : Dict
         """
         grid_search = GridSearchCV(self.nn, param_grid, cv=5, n_jobs=-3, return_train_score=True, verbose=3)
-
-        nn = MLPClassifier(random_state=self.random_state, max_iter=1000)
-        start = time.time()
         grid_search.fit(X_train, y_train)
-        self.training_time = time.time() - start
-
         self.best_nn = grid_search.best_estimator_
         self.best_params = grid_search.best_params_
+        self.cv_results = grid_search.cv_results_
 
-        return self.best_nn, self.best_params
+        return self.best_nn, self.best_params, self.cv_results
 
     def evaluate(self, X_test: np.ndarray, y_test: np.ndarray) -> Dict:
         """Evaluate the neural network.
