@@ -12,6 +12,12 @@ class PCAReducer:
         self.model = PCA(n_components=n_components, random_state=self.random_state)
         return self.model.fit_transform(X)
 
+    def transform(self, X: np.ndarray) -> np.ndarray:
+        """Transform the data using the fitted model."""
+        if self.model is None:
+            raise ValueError("Model not fitted")
+        return self.model.transform(X)
+
     def get_metrics(self) -> Dict:
         """Get PCA metrics."""
         if self.model is None:
