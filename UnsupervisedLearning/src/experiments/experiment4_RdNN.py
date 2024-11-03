@@ -48,7 +48,9 @@ class ExperimentRdNN:
                 'best_nn': best_nn,
                 'best_params': best_params,
                 'cv_results': cv_results,
-                'metrics': metrics
+                'metrics': metrics,
+                'X_train_transformed': X_train_transformed,
+                'X_test_transformed': X_test_transformed
             }
         return results
 
