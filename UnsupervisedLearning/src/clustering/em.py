@@ -40,9 +40,8 @@ class EMCluster:
         if self.model is None:
             raise ValueError("Model not fitted")
 
-        distances = self.model.predict_proba(X)
         labels = self.model.predict(X).reshape(-1, 1)
-        return np.hstack([distances, labels])
+        return labels
 
     def evaluate_with_ground_truth(self, y_true: np.ndarray, labels: np.ndarray) -> Dict:
         """

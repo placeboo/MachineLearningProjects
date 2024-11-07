@@ -10,6 +10,7 @@ from src.dimensionality_reduction.ica import ICAReducer
 from src.dimensionality_reduction.random_projection import RandomProjectionReducer
 from src.experiments.experiment1_clustering import ClusteringExperiment
 
+
 from src.clustering.kmeans import KMeansCluster
 from src.clustering.em import EMCluster
 
@@ -180,3 +181,51 @@ def evaluate_clustering(transformed_data: Dict,
     return results
 
 
+def run_combined_cluster(config: List[Dict], k_cluster: int, ground_truth: np.ndarray) -> Tuple[pd.DataFrame, pd.DataFrame, Dict]:
+    """
+    run the cluster on the transformed dataset from reduced dimensionality
+    :param config: [{rd: str, X: np.ndarray}]
+    :param k_cluster: int
+    :return:
+        - data frame of internal metrics | cluster method | rd method | silhouette score | calinski harabasz score|
+        - external metrics. |cluster method | rd method | adjusted rand score | normalized mutual info score | homogeneity | completeness
+        - predicted labels for each cluster method
+    """
+    metrics = pd.DataFrame()
+    external_metrics = pd.DataFrame()
+    predict_labels = {}
+    for c in config:
+        rd_method = c['rd']
+        X = c['X']
+        exp = ClusteringExperiment()
+        kmeans_metrics, em_metrics = exp.run_clustering_analysis(X, k_cluster)
+        kmeans_metrics = kmeans_metrics[['k', 'silhouette_score', 'calinski_harabasz_score']]
+        kmeans_metrics['method'] = 'kmeans'
+        kmeans_metrics['rd_method'] = rd_method
+
+        em_metrics = em_metrics[['k', 'silhouette_score', 'calinski_harabasz_score']]
+        em_metrics['method'] = 'em'
+        em_metrics['rd_method'] = rd_method
+
+        metrics = pd.concat([metrics, kmeans_metrics, em_metrics], ignore_index=True)
+
+        # get the predicted labels
+        kmeans_labels = exp.kmeans.fit(X, 2)
+        em_labels = exp.em.fit(X, 2)
+        predict_labels[rd_method] = {
+            'kmeans': kmeans_labels,
+            'em': em_labels
+        }
+
+        # get the external metrics
+        kmeans_external_metrics = exp.kmeans.evaluate_with_ground_truth(ground_truth, kmeans_labels)
+        kmeans_external_metrics['method'] = 'kmeans'
+        kmeans_external_metrics['rd_method'] = rd_method
+
+        em_external_metrics = exp.em.evaluate_with_ground_truth(ground_truth, em_labels)
+        em_external_metrics['method'] = 'em'
+        em_external_metrics['rd_method'] = rd_method
+
+        external_metrics = pd.concat([external_metrics, pd.DataFrame([kmeans_external_metrics, em_external_metrics])], ignore_index=True)
+
+    return metrics, predict_labels, external_metrics
