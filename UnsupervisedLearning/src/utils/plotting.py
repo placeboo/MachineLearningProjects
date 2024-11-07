@@ -4,6 +4,7 @@ import seaborn as sns
 import os
 from typing import Optional, Tuple, Dict
 import numpy as np
+from sklearn.manifold import TSNE
 
 def set_plot_style():
     plt.style.use('default')
@@ -414,5 +415,234 @@ def plot_3d_projection(
 
     # Save plot
     filename = filename or f'3d_projection_{algo_name}'
+    output_dir = f'{output_dir}/{dataset}/{experiment}'
+    save_plot(output_dir, filename)
+
+
+def plot_train_val_score(
+        data: pd.DataFrame,
+        x_col: str='n_components',
+        y_train: str='mean_train_score',
+        y_val: str='mean_test_score',
+        output_dir: str = 'figs',
+        dataset: str = 'dataset1',
+        experiment: str = 'experiment4',
+        filename: Optional[str] = None,
+        algo_name: Optional[str] = None,
+):
+    set_plot_style()
+    plt.figure()
+    plt.plot(data[x_col], data[y_train], 'o-', label='Train Score')
+    plt.plot(data[x_col], data[y_val], 'o-', label='Validation Score')
+    plt.xlabel('Number of Components')
+    plt.ylabel('Score')
+    plt.legend()
+    plt.tight_layout()
+    plt.legend(loc='best', frameon=True, fancybox=False, edgecolor='black')
+    output_dir = f'{output_dir}/{dataset}/{experiment}'
+    filename = filename or f'train_val_score_{algo_name}'
+    save_plot(output_dir, filename)
+
+
+def visualize_clusters_tsne(
+        X: np.ndarray,
+        labels: np.ndarray,
+        perplexity: float = 30.0,
+        n_components: int = 2,
+        random_state: int = 42,
+        sample_size: Optional[int] = 5000,
+        output_dir: str = 'figs',
+        dataset: str = 'dataset1',
+        experiment: str = 'experiment1',
+        algorithm: str = 'kmeans',
+        title: Optional[str] = None,
+        figsize: Tuple[int, int] = (10, 5)
+) -> None:
+    """
+    Visualize clustering results using t-SNE dimensionality reduction.
+
+    Parameters:
+    -----------
+    X : np.ndarray
+        Input data matrix of shape (n_samples, n_features)
+    labels : np.ndarray
+        Cluster labels from clustering algorithm
+    true_labels : Optional[np.ndarray]
+        True labels for comparison (if available)
+    perplexity : float
+        t-SNE perplexity parameter
+    n_components : int
+        Number of components for t-SNE (2 or 3)
+    random_state : int
+        Random state for reproducibility
+    sample_size : Optional[int]
+        Number of samples to use for visualization (None for all samples)
+    output_dir : str
+        Directory to save the plots
+    dataset : str
+        Name of the dataset
+    experiment : str
+        Name of the experiment
+    algorithm : str
+        Name of the clustering algorithm
+    title : Optional[str]
+        Custom title for the plot
+    figsize : Tuple[int, int]
+        Figure size for the plots
+    """
+    # Sample data if needed
+    if sample_size and len(X) > sample_size:
+        np.random.seed(random_state)
+        indices = np.random.choice(len(X), sample_size, replace=False)
+        X = X[indices]
+        labels = labels[indices]
+
+    # Apply t-SNE
+    tsne = TSNE(
+        n_components=n_components,
+        perplexity=perplexity,
+        random_state=random_state,
+        n_jobs=-1  # Use all available cores
+    )
+    X_tsne = tsne.fit_transform(X)
+
+    # Set style
+    set_plot_style()
+
+    # Create figure
+
+    fig, ax1 = plt.subplots(1, 1, figsize=(figsize[0] // 2, figsize[1]))
+
+    # Plot predicted clusters
+    scatter1 = ax1.scatter(
+        X_tsne[:, 0],
+        X_tsne[:, 1],
+        c=labels,
+        cmap='Set1',
+        alpha=0.3,
+        s=50,
+        edgecolors='w',
+    )
+    #ax1.set_title(f'Predicted Clusters ({algorithm.upper()})')
+    ax1.set_xlabel('t-SNE Component 1')
+    ax1.set_ylabel('t-SNE Component 2')
+    legend1 = ax1.legend(*scatter1.legend_elements(),
+                         title="Clusters",
+                         loc="best")
+    ax1.add_artist(legend1)
+
+    # Plot true labels if available
+    # if true_labels is not None:
+    #     scatter2 = ax2.scatter(
+    #         X_tsne[:, 0],
+    #         X_tsne[:, 1],
+    #         c=true_labels,
+    #         cmap='Set1',
+    #         alpha=0.3,
+    #         s=50
+    #     )
+    #     ax2.set_title('True Labels')
+    #     ax2.set_xlabel('t-SNE Component 1')
+    #     ax2.set_ylabel('t-SNE Component 2')
+    #     legend2 = ax2.legend(*scatter2.legend_elements(),
+    #                          title="True Labels",
+    #                          loc="best")
+    #     ax2.add_artist(legend2)
+
+    plt.tight_layout()
+
+    # Save plot
+    output_dir = f'{output_dir}/{dataset}/{experiment}'
+    filename = f'tsne_visualization_{algorithm}'
+    save_plot(output_dir, filename)
+
+
+def plot_learning_curves(df, keys, output_dir='figs', dataset='dataset1',
+                         experiment='experiment4', figsize=(10, 6), colors=None, filename='learning_curves'):
+    """
+    Plot learning curves for multiple algorithms.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        DataFrame containing learning curve data organized by organize_learning_curve()
+    keys : list
+        List of algorithm keys in the results
+    output_dir : str
+        Directory to save the plot
+    dataset : str
+        Name of the dataset
+    experiment : str
+        Name of the experiment
+    figsize : tuple
+        Figure size (width, height)
+    colors : dict
+        Dictionary mapping keys to colors. If None, will use default color cycle
+    filename : str
+        Name of the output file
+    """
+    set_plot_style()
+    plt.figure(figsize=figsize)
+
+    # Default colors if none provided
+    if colors is None:
+        colors = {
+            'base': '#000000',  # black
+            'pca': '#1f77b4',  # blue
+            'ica': '#ff7f0e',  # orange
+            'rp': '#2ca02c',  # green
+            'kmeans': '#d62728',  # red
+            'em': '#9467bd',  # purple
+        }
+
+    for key in keys:
+        # Plot training score
+        plt.plot(df['train_sizes'],
+                 1 - df[f'{key}_train_score_mean'],
+                 label=f'{key.upper()} (Train)',
+                 color=colors.get(key.lower(), None),
+                 linestyle='-',
+                 linewidth=2,
+                 marker='o',
+                 markersize=5,
+                 markerfacecolor=colors.get(key.lower(), None),  # white fill
+                 markeredgecolor=colors.get(key.lower(), None),
+                 alpha=0.7
+                 )
+
+        # Add error bands for training score
+        # plt.fill_between(df['train_sizes'],
+        #                 1 - (df[f'{key}_train_score_mean'] - df[f'{key}_train_score_std']),
+        #                 1 - (df[f'{key}_train_score_mean'] + df[f'{key}_train_score_std']),
+        #                 alpha=0.1,
+        #                 color=colors.get(key.lower(), None))
+
+        # Plot validation score
+        plt.plot(df['train_sizes'],
+                 1 - df[f'{key}_val_score_mean'],
+                 label=f'{key.upper()} (Val)',
+                 color=colors.get(key.lower(), None),
+                 linestyle='--',
+                 linewidth=2,
+                 marker='o',
+                 markersize=5,
+                 markerfacecolor=colors.get(key.lower(), None),  # white fill
+                 markeredgecolor=colors.get(key.lower(), None),
+                 alpha=0.7
+                 )
+
+        # Add error bands for validation score
+        # plt.fill_between(df['train_sizes'],
+        #                 1 - (df[f'{key}_val_score_mean'] - df[f'{key}_val_score_std']),
+        #                 1 - (df[f'{key}_val_score_mean'] + df[f'{key}_val_score_std']),
+        #                 alpha=0.1,
+        #                 color=colors.get(key.lower(), None))
+
+    plt.xlabel('Train Size')
+    plt.ylabel('Error Rate')
+    plt.title('Learning Curves')
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.legend(loc='best', frameon=True, fancybox=False, edgecolor='black')
+    plt.tight_layout()
     output_dir = f'{output_dir}/{dataset}/{experiment}'
     save_plot(output_dir, filename)
