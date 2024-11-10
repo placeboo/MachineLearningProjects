@@ -36,7 +36,7 @@
 \setlength{\floatsep}{7pt plus 5pt minus 5pt}
 % Adjust table settings
 \setlength{\tabcolsep}{4pt}  % Reduce padding in table cells
-\setlength{\belowcaptionskip}{-3pt}
+\setlength{\belowcaptionskip}{-1pt}
 \setlength{\textfloatsep}{0pt plus 2pt minus 2pt}
 \setlength{\intextsep}{0pt plus 2pt minus 2pt}
 % Adjust caption settings
@@ -67,7 +67,7 @@
 % figure size
 \newcommand{\subfigwidth}{0.32\textwidth}
 \newcommand{\km}{\texttt{K-Means}}
-\newcommand{\em}{\texttt{EM}}
+\newcommand{\gmm}{\texttt{GMM}}
 \newcommand{\pca}{\texttt{PCA}}
 \newcommand{\nn}{\texttt{NN}}
 \begin{document}
@@ -81,24 +81,363 @@
 % Random Hill Climbing, Simulated Annealing, Genetic Algorithm, 
 % \end{IEEEkeywords}
 \section{Introduction}
+For this analysis, I utilized two datasets from the Classification Project. The first dataset comprises marketing phone call records from a Portuguese banking institution, containing 20 initial features - 10 numerical and 10 categorical. To prepare the data for unsupervised learning and dimensionality reduction, I used the preprocessed dataset from the Classification Project with the following steps: for numerical features, I clipped outliers using the IQR method with a 2.0 threshold and applied standardization using StandardScaler. For categorical features, I implemented one-hot encoding to convert them into numerical format. After preprocessing, the dataset expanded to 67 features. The dataset exhibits significant class imbalance, with 88.7\% of records belonging to the negative class.
+The second dataset consists of YouTube Comments Spam data, containing 1,956 records that include author information, video names, and content. This dataset is balanced, comprising 951 spam and 1,005 non-spam records. To represent the combined text fields (author, video name, and content), I employed MiniLM-based embeddings, resulting in 384 features.
 
-\section{Clustering}
+For Tasks 4 and 5, which involve neural network implementation, I will focus on the first dataset. 
+
+\section{Task 1: Clustering}
+I implemented K-means and Expectation Maximization (EM) clustering algorithms on two datasets from the classification task. To understand the unsupervised learning performance changes with different number of clusters, I varied the number of clusters from 2 to 10. For each algorithm, I employed multiple evaluation metrics to determine the optimal number of clusters and assess cluster quality. The metrics included internal measures such as inertia, Silhouette score, and Calinski-Harabasz score for K-means, along with BIC and AIC for EM. 
+
+\textbf{Hypothesis}:
+\begin{enumerate}
+    \item H1: The optimal number of clusters ($K$) determined by different metrics will vary between K-Means and GMM (or EM) due to their different assumptions about cluster shapes.
+    \item For dataset 1 - Banking Dataset:
+    \begin{itemize}
+        \item H2: Due to the imbalanced nature of the data (88.7\% negative class), both algorithms will tend to discover clusters that reflect this class imbalance.
+        \item H3: Given the high dimensionality (67 features) with one-hot encoded categorical variables, K-means will show more robust performance metrics compared to EM due to its simpler distance-based approach.
+
+    \end{itemize}
+    \item For dataset 2 - Text Embedding Dataset:
+    \begin{itemize}
+        \item H4: EM will perform better than K-means for the embedding dataset due to the semantic nature of MiniLM embeddings and their likely Gaussian-like distribution in the embedding space.
+        \item H5. The optimal number of clusters suggested by clustering metrics will be greater than 2 (the number of actual classes) for both algorithms, but EM will show a stronger preference for additional clusters due to capturing semantic sub-topics within spam/non-spam categories.
+    \end{itemize}
+\end{enumerate}
+\subsection{Clustering on Dataset 1}
+The dataset 1 contains 67 features, of out which 57 are one-hot encoded categorical features. This make the dataset very sparse. Fig. \ref{fig:dataset1_clustering} displays the clustering metrics for dataset 1. The inertia decreases with the number of clusters for K-means (Fig. \ref{fig:dataset1_inertia}) and elbow point is at 6. Inertia is always decreases as more clusters because the data are fitted better with more clusters, therefore the within cluster sum of squares decreases. 
+
+AIC and BIC decreases with the number of clusters for EM and the value is very similar (Fig. \ref{fig:dataset1_aic}, Fig \ref{fig:dataset1_bic}). It is against the intuition where BIC should penalize more for the number of clusters therefore has smaller value than AIC. The similarity between AIC and BIC values in my GMM clustering can be explained by examining their formulas and the impact of one-hot encoded sparse data. For a GMM with $k$ components in $d$ dimensions, AIC and BIC are defined as:
+$\text{AIC} = -2\ln(L) + 2p$
+$\text{BIC} = -2\ln(L) + \ln(n)p$
+where $L$ is the likelihood, $p = k(d + \frac{d(d+1)}{2}) - 1$ is the number of parameters, and $n=41188$ is the sample size. The likelihood term for GMM is:
+$\ln(L) = \sum_{i=1}^n \ln(\sum_{j=1}^k \pi_j \mathcal{N}(x_i|\mu_j,\Sigma_j))$
+where $\mathcal{N}(x|\mu,\Sigma)$ is the multivariate Gaussian density. In my case, with $d=67$ dimensions and many binary features from one-hot encoding, the covariance matrices $\Sigma_j$ become near-singular, causing the determinant term $|\Sigma_j|$ in the Gaussian density to approach zero. This leads to extremely large negative values in $\ln(L)$, often on the order of $10^5$ to $10^6$. Despite $\ln(n) \approx 10.63$ being about 5.3 times larger than the AIC coefficient of 2, the penalty terms ($2p$ vs $\ln(n)p$) become negligible compared to the dominant $-2\ln(L)$ term, causing AIC and BIC to exhibit similar patterns and leading to similar conclusions about the optimal number of components. 
+
+Both Silhouette and Calinski-Harabasz scores have the highest value at 2 clusters for K-means and EM, which aligns with the actual number of classes in the dataset. The Silhouette and Calinski-Harabasz is higher for K-means than EM, indicating better cluster separation. The superior performance of K-means over EM in terms of Silhouette and Calinski-Harabasz scores for Dataset 1 can be attributed to several mathematical properties of the algorithms and data characteristics. K-means directly optimizes the within-cluster sum of squares $\sum_{i=1}^n \min_{\mu_j \in C} ||x_i - \mu_j||^2$, which creates clear, spherical cluster boundaries in the standardized feature space. The preprocessing steps (standardization of numerical features and one-hot encoding of categorical features) create a feature space where Euclidean distances are meaningful and features are orthogonal, aligning perfectly with K-means' spherical cluster assumption. In contrast, EM's performance is hindered by its need to estimate full covariance matrices $\Sigma_k$ for each component k in a 67-dimensional space, where many dimensions are binary from one-hot encoding. This leads to near-singular covariance matrices, as binary features violate the Gaussian assumption underlying EM. The Silhouette score benefits from K-means' hard assignments which maximize the ratio $\frac{b(i) - a(i)}{\max\{a(i), b(i)\}}$ where a(i) is minimized within clusters and b(i) is maximized between clusters. Similarly, the Calinski-Harabasz score $\frac{\text{tr}(B_k)}{\text{tr}(W_k)} \times \frac{n-k}{k-1}$ is optimized by K-means' objective function, as minimizing within-cluster variance ($W_k$) while separating centroids naturally maximizes between-cluster variance ($B_k$). The standardization of features ensures each dimension contributes equally to these distance-based metrics, further favoring K-means' simpler, distance-based approach over EM's probabilistic model. 
+
+By comparing the metrics, I prefer to use Silhouette score and Calinski-Harabasz score to determine the optimal number of clusters due to the limitation of other metrics. The optimal number of clusters is 2 for both K-means and EM. The cluster sizes for K-means and GMM are shown in Table \ref{table:cluster_sizes}.
+Both algorithms produce similar cluster sizes, with Cluster 2 approximately twice the size of Cluster 1, despite using different clustering approaches.
+
+To visualize the clustering results, I use t-SNE to reduce the dimensionality of the data to 2D and plot the clusters in Fig. \ref{fig:dataset1_tsne_kmeans} and Fig. \ref{fig:dataset1_tsne_em}.
+To have an intuition of actual data labeling, I also draw the t-SNE plot with true label in Fi.g \ref{fig:dataset1_tsne_true}. Note that in the unsupervised learning, the true label is not used, but it is used here for visualization purpose.
+The t-SNE plots are generated by 2000 randomly selected records from the dataset. There's an interesting discrepancy between the t-SNE visualization of true labels versus clustering results. While KMeans and GMM show well-separated clusters, the t-SNE of true labels (client subscription status) reveals poor separation, which can be explained by several factors supported by the data. The dataset's high dimensionality (67 features after preprocessing) and significant class imbalance (88.7\% negative class) contribute to this phenomenon, as evidenced by the cluster compositions where both algorithms produced similar splits (~67.2\% negative cases). The low evaluation metrics (ARI: 0.13, NMI: 0.08) further confirm that while clustering algorithms artificially create well-separated groups by design, these clusters don't align well with the true subscription decisions. This mismatch is logical given that real-world customer decisions about term deposits aren't necessarily based on geometric similarity in feature space, but rather on complex, non-linear relationships between demographic, economic, and campaign-related features. The clustering algorithms force separation based on feature similarity, but two customers with very similar features might make different decisions about subscribing, making natural clustering difficult. t-SNE tries to preserve local structure and neighborhood relationships
+When the true relationship between features and labels is more of a continuous spectrum rather than distinct groups, t-SNE will show this as overlapping regions.
+\begin{table}[!t]
+    \renewcommand{\arraystretch}{1.3}
+    \caption{Comparison of Cluster Sizes for K-Means and GMM with K=2}
+    \label{table:cluster_sizes}
+    \centering
+    \begin{tabular}{|l|r|r|}
+        \hline
+        \textbf{Algorithm} & \textbf{Cluster 1} & \textbf{Cluster 2} \\
+        \hline
+        K-Means & 13,504 & 27,684 \\
+        GMM & 13,512 & 27,676 \\
+        \hline
+    \end{tabular}
+    \label{table:dataset1_task1_cluster_sizes} 
+\end{table}
+\begin{figure*}[!t]
+\centering
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset1/experiment1/inertia_vs_k_kmeans.png}
+        \small\caption{Inertia vs. number of clusters for K-means}
+        \label{fig:dataset1_inertia}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset1/experiment1/aic_vs_k_em.png}
+        \small\caption{AIC vs. number of clusters for EM}
+        \label{fig:dataset1_aic}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset1/experiment1/bic_vs_k_em.png}
+        \small\caption{BIC vs. number of clusters for EM}
+        \label{fig:dataset1_bic}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset1/experiment1/silhouette_score_vs_k_em_kmeans.png}
+        \label{fig:dataset1_silhouette}
+        \small\caption{Silhouette score vs. number of clusters for K-means and EM}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset1/experiment1/calinski_harabasz_score_vs_k_em_kmeans.png}
+        \small\caption{Calinski-Harabasz score vs. number of clusters for K-means and EM}
+        \label{fig:dataset1_calinski}
+    \end{subfigure}
+\caption{Clustering metrics for dataset 1}
+\label{fig:dataset1_clustering}
+\end{figure*}
+\begin{figure*}[!t]
+\centering
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset1/experiment1/tsne_visualization_true_label.png}
+        \small\caption{t-SNE visualization of true labels}
+        \label{fig:dataset1_tsne_true}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset1/experiment1/tsne_visualization_kmeans.png}
+        \small\caption{t-SNE visualization of K-means clusters}
+        \label{fig:dataset1_tsne_kmeans}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset1/experiment1/tsne_visualization_gmm.png}
+        \small\caption{t-SNE visualization of GMM clusters}
+        \label{fig:dataset1_tsne_em}
+    \end{subfigure}
+\caption{t-SNE visualization of actual labels and clustering results for dataset 1 with a random sample of 2000 records.}
+\label{fig:dataset1_tsne}
+\end{figure*}
+
+\subsection{Clustering on Dataset 2}
+Dataset 2 contains 384 features derived from MiniLM embeddings, representing 1,956 real comments from 5 different videos. The dataset is balanced, with 951 spam and 1,005 non-spam records. The clustering metrics for dataset 2 are shown in Fig. \ref{fig:dataset2_clustering}. As embeddings are dense vectors, unlike the sparse one-hot encoding features in dataset 1, the BIC for dataset 2 is smaller than AIC as expected. 
+When examining the Inertia plots for K-Means in Fig. \ref{fig:dataset2_inertia}, and Silhouette / Calinski-Harabasz score in Fig. \ref{fig:dataset2_silhouette} and \ref{fig:dataset2_calinski},all metrics suggest that the optimal number of clusters is 5. This differs from the actual number of classes (2) in the dataset. 
+However, the optimal number being 5 rather than 2 (spam/non-spam) aligns with the underlying data structure, as these clusters naturally correspond to the five distinct videos in the dataset. This suggests that the embedding space has captured meaningful semantic relationships within the comments, where comments from the same video tend to cluster together due to shared context, terminology, and discussion topics, regardless of their spam status, as shown in the t-SNE clusters in Fig. \ref{fig:dataset2_tsne_kmeans} and \ref{fig:dataset2_tsne_em}. This semantic clustering behavior demonstrates how the MiniLM embeddings effectively capture the contextual nuances of language beyond simple spam classification.
+
+Interestingly, contrary to my initial hypothesis H4 that EM would outperform K-means due to the semantic nature of embeddings, both algorithms showed remarkably similar performance in terms of Silhouette and Calinski-Harabasz scores. This unexpected result can be attributed to several factors. First, the MiniLM embeddings likely create well-separated, relatively uniform clusters in the high-dimensional space, making the spherical cluster assumption of K-means just as effective as EM's more flexible Gaussian distributions. Second, the standardization inherent in the embedding process may produce features that are already approximately normally distributed, diminishing the advantage of EM's ability to model varying cluster shapes and sizes.
+
+Examining the cluster compositions reveals nearly identical distributions between K-means and EM, with each cluster containing a relatively balanced mix of spam and non-spam comments. This balance suggests that comment semantics, rather than spam characteristics, drive cluster formation. For instance, Cluster 0 contains approximately 54\% non-spam and 46\% spam comments for both algorithms, indicating that comments are grouped more by their video context than their spam status. This finding challenges my initial hypothesis about EM showing stronger preference for additional clusters, as both algorithms converged to similar cluster structures driven by the video-specific semantic patterns in the embedding space.
+
+The comparable performance between K-means and EM also reflects the quality of the MiniLM embeddings in creating a well-structured feature space where even simple distance-based clustering can effectively capture semantic relationships. This observation provides valuable insights for practical applications, suggesting that when working with modern language embeddings, the choice between K-means and EM may be less critical than the quality of the underlying representation. 
+\begin{figure*}[!t]
+    \centering
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset2/experiment1/inertia_vs_k_kmeans.png}
+        \small\caption{Inertia vs. number of clusters for K-means}
+        \label{fig:dataset2_inertia}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset2/experiment1/aic_vs_k_em.png}
+        \small\caption{AIC vs. number of clusters for EM}
+        \label{fig:dataset2_aic}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset2/experiment1/bic_vs_k_em.png}
+        \small\caption{BIC vs. number of clusters for EM}
+        \label{fig:dataset2_bic}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset2/experiment1/silhouette_score_vs_k_em_kmeans.png}
+        \small\caption{Silhouette score vs. number of clusters for K-means and EM}
+        \label{fig:dataset2_silhouette}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset2/experiment1/calinski_harabasz_score_vs_k_em_kmeans.png}
+        \small\caption{Calinski-Harabasz score vs. number of clusters for K-means and EM}
+        \label{fig:dataset2_calinski}
+    \end{subfigure}
+\caption{Clustering metrics for dataset 2}
+\label{fig:dataset2_clustering}
+\end{figure*}
+%insert t-SNE figures
+\begin{figure*}[!t]
+    \centering
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset2/experiment1/tsne_visualization_true_label.png}
+        \small\caption{t-SNE visualization of true labels}
+        \label{fig:dataset2_tsne_true}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset2/experiment1/tsne_visualization_kmeans.png}
+        \small\caption{t-SNE visualization of K-means clusters}
+        \label{fig:dataset2_tsne_kmeans}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset2/experiment1/tsne_visualization_gmm.png}
+        \small\caption{t-SNE visualization of GMM clusters}
+        \label{fig:dataset2_tsne_em}
+    \end{subfigure}
+\caption{t-SNE visualization of actual labels and clustering results for dataset 2 with a random sample of 2000 records.}
+\label{fig:dataset2_tsne}    
+\end{figure*}
 
 \section{Dimensionality Reduction}
+This section explores the application of three linear dimensionality reduction techniques - Principal Component Analysis (PCA), Independent Component Analysis (ICA), and Random Projections (RP) - on both datasets. For Dataset 1 (Banking Marketing), I explored components ranging from 10 to 67, while for Dataset 2 (Text Embeddings), I examined components ranging from 10 to 380.
+\subsection{RD on dataset 1}
+For the high-dimensional banking dataset with 67 features containing both numerical and one-hot encoded categorical variables, I hypothesize that:
+\begin{itemize}
+    \item H6: PCA will effectively capture the variance with fewer components due to potential correlations among one-hot encoded categorical features and numeric features.
+    \item H7: ICA will need to retain more components than PCA, because ICA focuses on finding statistically independent components which may require preserving more one-hot encoded features.
+    \item H8: Random Projections will require more components to achieve comparable reconstruction quality due to the sparse nature of one-hot encoded features, which may not preserve distances well under random transformations.
+\end{itemize}
+%plots with n components
+\begin{figure*}[!t]
+\centering
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset1/experiment2/cumulative_explained_variance_vs_n_components_pca.png}
+        \small\caption{PCA: Cumulative variance explained vs. number of components}
+        \label{fig:dataset1_pca_cumulative}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset1/experiment2/abs_mean_kurtosis_vs_n_components_ica.png}
+        \small\caption{ICA: Mean of Absolute Kurtosis vs. number of components}
+        \label{fig:dataset1_ica_kurtosis}
+    \end{subfigure}
+    % rp
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset1/experiment2/reconstruction_error_mean_vs_n_components_rp.png}
+        \small\caption{RP: Reconstruction error vs. number of components}
+        \label{fig:dataset1_rp_reconstruction}
+    \end{subfigure}
+\caption{Dimensionality reduction metrics for dataset 1}
+\label{fig:dataset1_rd}
+\end{figure*}
+The results support several of these hypotheses. PCA analysis reveals that approximately 25 components capture 95\% of the variance in Fig. \ref{fig:dataset1_pca_cumulative}, indicating significant redundancy in the original 67-dimensional space. This efficiency aligns with my expectation of correlation among numerical features and lower importance of some categorical distinction over data variance. 
+
+ICA's mean absolute kurtosis peaks at around 55 components, notably higher than PCA's efficient compression point in Fig. \ref{fig:dataset1_ica_kurtosis}. This higher number makes sense because ICA seeks statistically independent components rather than just uncorrelated ones. Dataset 1 has 57 one-hot features, which start as mutually exclusive. Their interactions with numerical features create complex dependencies that ICA must disentangle, requiring more components to fully capture the independent signals in the data.
+
+Random Projections show an interesting two-phase behavior in reconstruction error: an initial decrease until around 37 components, followed by accelerated improvement around 55 components (Fig. \ref{fig:dataset1_rp_reconstruction}). This pattern likely emerges because the early phase (up to 37 components) captures the broad structure of the data space.
+The acceleration point around 55 components suggests a threshold where RP gains enough dimensions to better preserve the distinct clusters created by categorical variables in the high-dimensional space.
+This behavior in RP highlights how the algorithm struggles to find a balance between preserving distances among continuous features while maintaining the clear separations created by binary categorical indicators. Unlike PCA which can directly optimize for variance preservation, RP must preserve all pairwise distances simultaneously, making it more sensitive to the dual nature of mixed-type data.
+\subsection{RD on dataset 2}
+For the dense 384-dimensional text embedding dataset, I propose different hypotheses:
+\begin{itemize}
+    \item H9: PCA will require more components relative to the feature space compared to Dataset 1, as embeddings are designed to distribute semantic information across dimensions more evenly.
+    \item H10: ICA will find meaningful independent components at multiple scales due to the hierarchical nature of semantic relationships in text embeddings.
+    \item H11: Random Projections will perform more efficiently than in Dataset 1 due to the dense, normalized nature of embedding vectors, which better preserve distances under random transformations.
+\end{itemize}
+For the dense 384-dimensional text embedding dataset from MiniLM, my initial hypotheses require significant revision based on the observed results. The embeddings represent semantic information in a fundamentally different way than traditional feature spaces, leading to unexpected behaviors.
+
+PCA requires 145 components to capture 95\% of the variance, aligning with the theoretical understanding of how transformers encode semantic information. The gradual accumulation of explained variance suggests that while some dimensions are more important than others, there isn't a sharp drop-off in importance, reflecting how language models distribute semantic information across multiple dimensions for robustness.
+
+ICA's behavior contradicts my initial expectations. Rather than finding distinct independent components at different semantic scales, the mean absolute kurtosis continues to increase nearly linearly with the number of components without showing clear diminishing returns. This unexpected pattern suggests that semantic information in embeddings is more densely interwoven than originally thought, and each additional ICA component continues to find meaningful non-Gaussian projections of the data.
+
+Random Projections show remarkably consistent behavior with PCA, requiring around 150 components before reconstruction error significantly diminishes. This alignment between PCA and RP suggests the embedding space has an intrinsic dimensionality around 145-150 dimensions where both variance-based (PCA) and distance-based (RP) methods converge. The smooth decrease in reconstruction error indicates that the embedding space is indeed well-behaved under random projections.
+
+These results challenge my initial hypotheses in important ways. I expected to find hierarchical semantic structure through ICA, but instead found evidence of more uniformly distributed complexity. The unexpected alignment between PCA and RP dimensionality requirements suggests the embedding space is more regularly structured than initially thought. This helps explain why both methods find similar optimal dimensionalities, while ICA's behavior suggests the independence structure of semantic relationships is more complex than previously theorized.
+%plot
+\begin{figure*}[!t]
+\centering
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset2/experiment2/cumulative_explained_variance_vs_n_components_pca.png}
+        \small\caption{PCA: Cumulative variance explained vs. number of components}
+        \label{fig:dataset2_pca_cumulative}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset2/experiment2/abs_mean_kurtosis_vs_n_components_ica.png}
+        \small\caption{ICA: Mean of Absolute Kurtosis vs. number of components}
+        \label{fig:dataset2_ica_kurtosis}
+    \end{subfigure}
+    % rp
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/dataset2/experiment2/reconstruction_error_mean_vs_n_components_rp.png}
+        \small\caption{RP: Reconstruction error vs. number of components}
+        \label{fig:dataset2_rp_reconstruction}
+    \end{subfigure}
+\caption{Dimensionality reduction metrics for dataset 2}
+\label{fig:dataset2_rd}
+\end{figure*}
 
 \section{Clustering on Reduced Dimensionality}
+This section study how dimensionality reduction techniques influence clustering by applying K-Means and GMM clustering to the reduced feature spaces and comparing their performance against clustering on the original data. For dataset 1, I used the cluster with 2 and PCA, ICA, and RP reduced feature spaces with 25, 55, and 37 components respectively. For dataset 2, I used custer with 5 and the PCA, ICA, and RP reduced feature spaces with 145.
 
-\section{Neural Networks on Reduced Dimensionality}
+Hypothesis:
+\begin{itemize}
+    \item H12: For Dataset 1 (Banking), I predict that clustering on PCA-reduced features will outperform clustering on the original space. The rationale is that PCA should effectively eliminate noise from the sparse one-hot encoded variables while retaining the key patterns that define meaningful customer groups.
+    \item H13: For Dataset 2 (Text Embeddings), I anticipate that ICA-based clustering will underperform compared to PCA or RP. This is because language embeddings typically encode meaning through correlated dimensions rather than independent components, making ICA's assumptions less appropriate for this data type.
+\end{itemize}
 
-\section{Neural Networks with Clustering as New Features}
+\subsection{Clustering on Reduced Dimensionality on Dataset 1}
+The banking dataset shows interesting metrics across the reduction methods in Tab. \ref{tab:clustering-metrics} (denote as Dataset as 1). Clustering after PCA shows modest gains over baseline clustering, with Silhouette scores improving by 0.013 points for both algorithms (from 0.270 to 0.283 for K-means and 0.269 to 0.283 for GMM). This improvements suggests PCA successfully filters out noise while maintaining informative variance patterns. ICA results is against my intuition. It produces higher Silhouette scores (0.583) but much lower Calinski-Harabasz scores (762.704 versus baseline 13337.229). Such contradiction is due to how ICA transforms the data. By enforcing statistical independence, ICA creates clearer cluster boundaries but disrupts the natural density relationships in the financial data. The reduced Calinski-Harabasz score indicates that while clusters become more distinct, they lose their internal cohesiveness, as ICA may separate features that naturally work together in describing financial behaviors. For instance, naturally correlated features like age and education are forcibly separated into independent components by ICA. This separation has two effects: first, it increases within-cluster scatter (W) because points that should be close together based on their real-world relationships are artificially spread apart. Second, it reduces the between-cluster scatter relative to W, as the resulting cluster centroids no longer represent natural groupings in the data.
+Random Projections demonstrate resilience, with metrics staying relatively close to baseline performance. This stability indicates that the key clustering information in the banking data remains largely preserved even under random dimensional transformations.
 
+\subsection{Clustering on Reduced Dimensionality on Dataset 2}
+The text embedding results tell a different story. Compared with the baseline clustering, PCA-based clustering achieves a the greatest improvement on Silhouette and Calinski-Harabasz scores, suggesting that the principal components capture meaningful semantic patterns useful for clustering. ICA's performance on this dataset is particularly noteworthy, yielding negative Silhouette scores and remarkably low Calinski-Harabasz scores (around 8.9 compared to baseline 281.253). This poor showing reflects the fundamental mismatch between ICA's independence assumptions and the interconnected nature of semantic embeddings. Language meaning typically spreads across multiple correlated dimensions, and ICA's attempt to separate these relationships results in distorted cluster assignments. 
 
+It's worth noting that while the table includes external metrics like ARI and AMI, these are shown purely for academic comparison. For unsupervised clustering tasks with different dimensional reduction methods on my two datasets, both ARI and AMI are close to zero, indicating no meaningful agreement between the clustering results and the true labels. Unsupervised clustering does not work well with my cases. 
+In real-world clustering tasks, such ground truth labels aren't available, making internal metrics our primary evaluation tools. Based on these internal measures, PCA emerges as the most reliable reduction method for both datasets compared with other dimensional reduction methods.
+\vspace{8pt}
+\begin{table}[htbp]
+    \centering
+    \small 
+    \caption{Comparison of Clustering Performance with Different Dimensionality Reduction Techniques}
+    \label{tab:clustering-metrics}
+    \setlength{\tabcolsep}{4pt}  
+    \begin{tabular}{c|l|cc|cc}
+    \hline
+    \multirow{2}{*}{Dataset} & \multirow{2}{*}{Method} & \multicolumn{2}{c|}{Internal Metrics} & \multicolumn{2}{c}{External Metrics} \\
+    \cline{3-6}
+     &  & Silhouette & Calinski-H. & ARI & AMI \\
+    \hline
+    \multirow{8}{*}{1} & KMeans & 0.270 & 13337.229 & 0.131 & 0.080 \\
+     & GMM & 0.269 & 13336.284 & 0.131 & 0.080 \\
+     & Kmeans+PCA & 0.283 & 14474.691 & 0.132 & 0.080 \\
+     & GMM+PCA & 0.283 & 14473.416 & 0.131 & 0.080 \\
+     & Kmeans+ICA & 0.583 & 762.704 & 0.016 & 0.007 \\
+     & GMM+ICA & 0.583 & 762.704 & 0.016 & 0.007 \\
+     & Kmeans + RP & 0.251 & 11534.516 & 0.133 & 0.087 \\
+     & GMM+RP & 0.242 & 10939.997 & 0.128 & 0.082 \\
+    \hline
+    \multirow{8}{*}{2} & Kmeans & 0.207 & 281.253 & 0.000 & 0.000 \\
+     & GMM & 0.207 & 281.253 & 0.000 & 0.000 \\
+     & Kmeans+PCA & 0.221 & 305.840 & 0.000 & 0.000 \\
+     & GMM+PCA & 0.221 & 305.840 & 0.000 & 0.000 \\
+     & Kmeans+ICA & -0.009 & 8.927 & 0.018 & 0.013 \\
+     & GMM+ICA & -0.006 & 8.868 & 0.022 & 0.018 \\
+     & Kmeans+RP & 0.193 & 274.370 & -0.001 & 0.000 \\
+     & GMM+RP & 0.193 & 274.370 & -0.001 & 0.000 \\
+    \hline
+    \end{tabular}
+    \end{table}
 
+\section{Neural Network Performance with Dimensionality Reduction and Clustering Features}
+This section explores how different feature engineering approaches - dimensionality reduction and clustering-based features - affect neural network performance on the banking marketing dataset (Dataset 1). Dataset 1 was chosen for this analysis due to its high-dimensional feature space (67 features) with mixed numerical and categorical variables, making it an ideal candidate to study the effects of feature transformation on model performance. The combination of standardized numerical features and one-hot encoded categorical variables creates a complex, sparse feature space that presents interesting challenges for both dimensionality reduction and clustering-based approaches.
+The data was split into 80\% training and 20\% testing sets, maintaining the same split used in Assignment 1 to ensure consistent performance comparison. I established two baseline neural network models for comparison: one utilizing the full set of 67 features, and another using a reduced set of 30 features obtained through tree-based feature selection followed by one-hot encoding.
+The experimental analysis consisted of two main tasks. In the first task, I evaluated neural network performance using dimensionally reduced features from three different techniques: PCA with 25 components (capturing 95\% of variance), ICA with 55 components (optimized for kurtosis), and RP with 37 components (selected based on reconstruction error). For the second task, I augmented the original feature set with cluster assignments derived from K-means and GMM clustering algorithms, both configured with 2 clusters based on the optimal clustering analysis from earlier sections.
 
-\begin{thebibliography}{00}
-\bibitem{b1} Russell, S. and P. Norvig (2010). Artificial Intelligence: A Modern Approach, 3rd edition. Prentice Hall, New Jersey, USA.
-\bibitem{b2} De Bonet, J., C. Isbell, and P. Viola (1997). MIMIC: Finding Optima by Estimating Probability Densities. In Advances in Neural Information Processing Systems (NIPS) 9, pp. 424–430.
-\end{thebibliography}
+To ensure a fair and robust comparison across all models, I implemented a systematic training approach. Each neural network was trained using the Adam optimizer with adaptive learning rate adjustment and a maximum of 2000 iterations, incorporating early stopping to prevent overfitting. The model architecture for each feature set was optimized through an extensive grid search over different layer configurations and node counts, using 5-fold cross-validation on the training set. The learning curves and test set metrics presented in the results reflect the performance of these optimized architectures, allowing for meaningful comparison across different feature engineering approaches.
 
+Hypotheses:
+\begin{itemize}
+    \item H14: Neural networks trained on PCA-reduced features (25 components) will show comparable performance to the baseline model while achieving faster convergence, because PCA effectively captured 95\% of the variance while removing noise from one-hot encoded variables.
+    \item H15: Clustering-based features from K-means and GMM will reduce model performance compared to the baseline, as the clustering analysis in Table 2 showed very low ARI and AMI scores (around 0.13 and 0.08 respectively), indicating poor alignment between cluster assignments and true class labels.
+\end{itemize}
+
+The experimental results in Fig. \ref{fig:learning_curve} and Tab. \ref{tab:classification-metrics} show several unexpected findings. Contrary to H14, models trained on dimensionally reduced features (PCA: 25 components, ICA: 55 components, RP: 37 components) consistently underperformed compared to the baseline model using full features. This underperformance is demonstrated in both the learning curves, where validation errors consistently exceed those of the full feature model, and in the test set F1 scores, where PCA (0.589), ICA (0.578), and RP (0.619) all fall short of the baseline model's performance (0.642). 
+The learning curves in Fig. \ref{fig:learning_curve} demonstrate a persistent pattern of higher validation error rates compared to training errors across all models except ICA, indicating overfitting issues. This overfitting behavior suggests that despite the dimensional reduction, the models are still capturing noise in the training data that doesn't generalize well to unseen examples. However, an encouraging observation is that the gap between training and validation errors gradually narrows as the training size increases across all models. This trend suggests that the models could potentially benefit from more training data to achieve better generalization. Interestingly, ICA shows the most stable learning behavior with the smallest gap between training and validation errors, though its overall performance metrics are lower. This stability might be attributed to ICA's ability to find truly independent components, which could act as a form of regularization but at the cost of losing some predictive information. The relatively poor performance of PCA, despite capturing 95\% of the variance with just 25 components, suggests that some of the discarded variance might have contained subtle but important discriminative information for the classification task.
+
+Interestingly, contrary to H15, using cluster labels as additional features did not degrade model performance as expected. Despite the clustering analysis showing poor alignment with true labels (ARI = 0.13, AMI = 0.08), both K-means and GMM feature augmentation achieved validation error rates marginally better (by approximately 0.01) than the baseline model. This improvement is also reflected in the test set metrics, where GMM-based features showed enhanced recall (0.674 vs baseline 0.620) while maintaining reasonable precision, resulting in F1 scores (K-Means: 0.632, GMM: 0.647) comparable to the full feature model (0.642). This unexpected resilience might be explained by two factors: first, the cluster assignments, while not directly aligning with class labels, may capture complementary patterns in the feature space that enhance the model's discriminative power; second, since clustering labels are used as additional features rather than replacements, the model can still utilize all original information while benefiting from these supplementary patterns.
+When comparing different feature reduction approaches, the tree-based feature selection yielded notably different results from dimensional reduction methods. The tree-based approach, which reduced the feature space to 30 dimensions, achieved an F1 score of 0.582, underperforming compared to both the full feature model and clustering-augmented models. This suggests that while tree-based methods can identify important individual features, they may miss important feature interactions that contribute to the classification task.
+Among dimensional reduction techniques, Random Projection (RP) demonstrated greater performance with lower validation error rates and better test set metrics (F1: 0.619) compared to PCA (0.589) and ICA (0.578). This advantage might stem from RP's ability to preserve relative distances between data points while reducing dimensionality. Unlike PCA which optimizes for variance or ICA which seeks independent components, RP's random transformation may better maintain the overall structure of the feature space, particularly beneficial for this dataset where complex interactions between numerical and categorical features exist.
+
+The superior performance of the full feature model suggests that this classification task benefits from the complete information contained in all 67 features. This could be attributed to several factors: first, the preprocessing steps (standardization and one-hot encoding) created a well-structured feature space where each dimension contributes meaningful information; second, the neural network's architecture, optimized through grid search, appears capable of effectively handling this dimensionality without severe overfitting; and third, the binary classification task may rely on subtle patterns across multiple features that are lost or diminished through dimension reduction. Additionally, the relatively large training set size (80\% of 41,188 samples) provides sufficient data for the model to learn these complex patterns effectively.
+
+% insert learning curve
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.8\textwidth]{../figs/dataset1/experiment5/all_learning_curve.png}
+\caption{Neural Network Learning Curves Across Feature Engineering Methods on Dataset 1. It compares learning curves of training (solid line) and validation (dash line) error rates versus training data size for seven different models: (1) Baseline using all 67 features (2-4) Dimensionality reduction using PCA (25 components), ICA (55 components), and RP (37 components), and (5-6) Original features augmented with cluster labels from K-means (2 clusters) and GMM (2 clusters) respectively.}
+\label{fig:learning_curve}
+\end{figure*}
+\begin{table}[htbp]
+    \centering
+    \small
+    \caption{Classification Performance Metrics Comparison on Test Set. The table presents four key performance metrics (Accuracy, Precision, Recall, F1) across seven different feature engineering approaches: Full Feature (baseline with all 67 features), Tree-based Feature Reduction (30 features after selection and encoding), three dimensionality reduction methods (PCA with 25 components, ICA with 55 components, RP with 37 components), and two clustering label approaches (KMeans Label using 2 clusters, GMM Label using 2 clusters).}
+    \label{tab:classification-metrics}
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{>{\raggedright\arraybackslash}p{2.5cm}|cccc}
+    \hline
+    \textbf{Case} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} \\
+    \hline
+    Full Feature & 0.923 & 0.665 & 0.620 & 0.642 \\
+    \hline
+    Tree-based Feature Reduction & 0.909 & 0.618 & 0.549 & 0.582 \\
+    \hline
+    PCA & 0.918 & 0.672 & 0.524 & 0.589 \\
+    ICA & 0.916 & 0.657 & 0.516 & 0.578 \\
+    RP & 0.920 & 0.660 & 0.583 & 0.619 \\
+    \hline
+    KMeans Label & 0.921 & 0.656 & 0.610 & 0.632 \\
+    GMM Label & 0.918 & 0.623 & 0.674 & 0.647 \\
+    \hline
+    \end{tabular}
+    \end{table}
+
+\section{Summary}
+## VI. SUMMARY AND CONCLUSIONS
+
+This study explored unsupervised learning techniques on two distinct datasets: a banking marketing dataset with mixed features, and a YouTube comments dataset represented through MiniLM embeddings. The banking data achieved optimal clustering with 2 clusters (ARI = 0.13) and required 25 PCA components, while the YouTube comments dataset formed 5 optimal clusters corresponding to source videos and required 145-150 components to maintain semantic structure. This difference highlights how NLP tasks using modern embedding techniques present unique challenges, as embedding spaces are already optimized for semantic information representation.
+
+A key finding is that neither clustering nor dimensionality reduction significantly improved classification performance on the banking dataset, with reduced feature sets consistently underperforming compared to the baseline (F1 score 0.642). However, these techniques remain valuable in scenarios involving noisy data, limited training samples, or computational constraints. The effectiveness of these methods appears highly dependent on data characteristics and the specific learning task, suggesting their application should be carefully considered based on the particular challenges of each machine learning problem.
 \end{document}
 

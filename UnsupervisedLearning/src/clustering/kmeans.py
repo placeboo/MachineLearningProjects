@@ -19,7 +19,7 @@ class KMeansCluster:
 
     def fit(self, X: np.ndarray, n_cluster: int) -> np.ndarray:
         """Fit the KMeans model to the data."""
-        self.model = KMeans(n_clusters=n_cluster, random_state=self.random_state)
+        self.model = KMeans(n_clusters=n_cluster, n_init='auto',random_state=self.random_state)
         return self.model.fit_predict(X)
 
     def get_metrics(self, X: np.ndarray, labels: np.ndarray) -> Dict:
@@ -39,9 +39,8 @@ class KMeansCluster:
         if self.model is None:
             raise ValueError("Model not fitted")
 
-        distances = self.model.transform(X) # distance to all centroids
         labels = self.model.predict(X).reshape(-1, 1) # cluster assignment
-        return np.hstack([distances, labels])
+        return labels
 
     def evaluate_with_ground_truth(self, y_true: np.ndarray, labels: np.ndarray) -> Dict:
         """
@@ -64,6 +63,5 @@ class KMeansCluster:
             'normalized_mutual_info': normalized_mutual_info_score(y_true, labels),
             'adjusted_mutual_info': adjusted_mutual_info_score(y_true, labels),
             'homogeneity': homogeneity_score(y_true, labels),
-            'completeness': completeness_score(y_true, labels),
-            'v_measure': v_measure_score(y_true, labels)
+            'completeness': completeness_score(y_true, labels)
         }

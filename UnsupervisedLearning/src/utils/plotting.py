@@ -558,7 +558,9 @@ def visualize_clusters_tsne(
 
 
 def plot_learning_curves(df, keys, output_dir='figs', dataset='dataset1',
-                         experiment='experiment4', figsize=(10, 6), colors=None, filename='learning_curves'):
+                         experiment='experiment4', figsize=(10, 6),
+                         font_multiplier=1.5,
+                         colors=None, filename='learning_curves'):
     """
     Plot learning curves for multiple algorithms.
 
@@ -596,53 +598,62 @@ def plot_learning_curves(df, keys, output_dir='figs', dataset='dataset1',
         }
 
     for key in keys:
-        # Plot training score
-        plt.plot(df['train_sizes'],
-                 1 - df[f'{key}_train_score_mean'],
-                 label=f'{key.upper()} (Train)',
-                 color=colors.get(key.lower(), None),
-                 linestyle='-',
-                 linewidth=2,
-                 marker='o',
-                 markersize=5,
-                 markerfacecolor=colors.get(key.lower(), None),  # white fill
-                 markeredgecolor=colors.get(key.lower(), None),
-                 alpha=0.7
-                 )
+        color = colors.get(key.lower(), None)
 
-        # Add error bands for training score
-        # plt.fill_between(df['train_sizes'],
-        #                 1 - (df[f'{key}_train_score_mean'] - df[f'{key}_train_score_std']),
-        #                 1 - (df[f'{key}_train_score_mean'] + df[f'{key}_train_score_std']),
-        #                 alpha=0.1,
-        #                 color=colors.get(key.lower(), None))
+        # Plot training score
+        train_line = plt.plot(df['train_sizes'],
+                              1 - df[f'{key}_train_score_mean'],
+                              label=f'{key.upper()} (Train)',
+                              color=color,
+                              linestyle='-',
+                              linewidth=2,
+                              marker='o',
+                              markersize=5,
+                              markerfacecolor=color,
+                              markeredgecolor=color,
+                              alpha=0.7)[0]
 
         # Plot validation score
-        plt.plot(df['train_sizes'],
-                 1 - df[f'{key}_val_score_mean'],
-                 label=f'{key.upper()} (Val)',
-                 color=colors.get(key.lower(), None),
-                 linestyle='--',
-                 linewidth=2,
-                 marker='o',
-                 markersize=5,
-                 markerfacecolor=colors.get(key.lower(), None),  # white fill
-                 markeredgecolor=colors.get(key.lower(), None),
-                 alpha=0.7
-                 )
+        val_line = plt.plot(df['train_sizes'],
+                            1 - df[f'{key}_val_score_mean'],
+                            label=f'{key.upper()} (Val)',
+                            color=color,
+                            linestyle='--',
+                            linewidth=2,
+                            marker='o',
+                            markersize=5,
+                            markerfacecolor=color,
+                            markeredgecolor=color,
+                            alpha=0.7)[0]
 
-        # Add error bands for validation score
-        # plt.fill_between(df['train_sizes'],
-        #                 1 - (df[f'{key}_val_score_mean'] - df[f'{key}_val_score_std']),
-        #                 1 - (df[f'{key}_val_score_mean'] + df[f'{key}_val_score_std']),
-        #                 alpha=0.1,
-        #                 color=colors.get(key.lower(), None))
+        # Force the legend lines to have the correct length
+        train_line.set_dashes([])  # Solid line
+        val_line.set_dashes([6, 2])  # Dashed line
 
-    plt.xlabel('Train Size')
-    plt.ylabel('Error Rate')
-    plt.title('Learning Curves')
+    plt.xlabel('Train Size', fontsize=14 * font_multiplier)
+    plt.ylabel('Error Rate', fontsize=14 * font_multiplier)
     plt.grid(True, linestyle='--', alpha=0.7)
-    plt.legend(loc='best', frameon=True, fancybox=False, edgecolor='black')
+
+    # Increase the length of lines in legend
+    legend = plt.legend(loc='best',
+                        frameon=True,
+                        fancybox=False,
+                        edgecolor='black',
+                        fontsize=8 * font_multiplier,
+                        framealpha=0.5,
+                        handlelength=3,  # Increase length of legend lines
+                        labelspacing=0.2)  # Adjust spacing between legend entries
+
+    # Ensure legend lines maintain their styles
+    for line in legend.get_lines():
+        if '(Val)' in line.get_label():
+            line.set_linestyle('--')
+        else:
+            line.set_linestyle('-')
+
+    plt.xticks(fontsize=12 * font_multiplier)
+    plt.yticks(fontsize=12 * font_multiplier)
     plt.tight_layout()
+
     output_dir = f'{output_dir}/{dataset}/{experiment}'
     save_plot(output_dir, filename)
