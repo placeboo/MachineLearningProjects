@@ -13,7 +13,7 @@ def find_elbow_indice(arr: np.ndarray) -> int:
     # Calculate the second derivative
     second_derivative = np.diff(np.diff(arr))
     # Find the index of the maximum value of the second derivative
-    elbow_idx = np.argmin(np.abs(second_derivative)) + 2
+    elbow_idx = np.argmax(np.abs(second_derivative)) + 2
     return elbow_idx
 
 
@@ -58,3 +58,19 @@ def organize_experiment4_results(data: Dict) -> Tuple[pd.DataFrame, pd.DataFrame
     best_idx = result_df['mean_test_score'].idxmax()
     best_n_components = result_df.loc[best_idx, 'n_components']
     return result_df, eval_result_df, best_n_components
+
+def organize_experiment5_results(data: Dict) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    results = {}
+
+    cv_results = data['cv_results']
+    cv_results = pd.DataFrame(cv_results)
+    cv_result = cv_results.loc[cv_results['rank_test_score'] == 1]
+    results['params'] = cv_result['params'].values
+    results['mean_fit_time'] = cv_result['mean_fit_time'].values[0]
+    results['mean_score_time'] = cv_result['mean_score_time'].values[0]
+    results['mean_test_score'] = cv_result['mean_test_score'].values[0]
+    results['mean_train_score'] = cv_result['mean_train_score'].values[0]
+
+    eval_result = pd.DataFrame([data['metrics']])
+
+    return pd.DataFrame(results), eval_result
