@@ -434,8 +434,6 @@ The superior performance of the full feature model suggests that this classifica
     \end{table}
 
 \section{Summary}
-## VI. SUMMARY AND CONCLUSIONS
-
 This study explored unsupervised learning techniques on two distinct datasets: a banking marketing dataset with mixed features, and a YouTube comments dataset represented through MiniLM embeddings. The banking data achieved optimal clustering with 2 clusters (ARI = 0.13) and required 25 PCA components, while the YouTube comments dataset formed 5 optimal clusters corresponding to source videos and required 145-150 components to maintain semantic structure. This difference highlights how NLP tasks using modern embedding techniques present unique challenges, as embedding spaces are already optimized for semantic information representation.
 
 A key finding is that neither clustering nor dimensionality reduction significantly improved classification performance on the banking dataset, with reduced feature sets consistently underperforming compared to the baseline (F1 score 0.642). However, these techniques remain valuable in scenarios involving noisy data, limited training samples, or computational constraints. The effectiveness of these methods appears highly dependent on data characteristics and the specific learning task, suggesting their application should be carefully considered based on the particular challenges of each machine learning problem.

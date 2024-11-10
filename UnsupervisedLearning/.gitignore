@@ -20,4 +20,5 @@
 *.bbl
 *.blg
 *.bcf
-
+*.xlsx
+*.docx
