@@ -42,7 +42,7 @@ def create_param_heatmap(data: pd.DataFrame,
         columns = x_param,
         values = metric,
         aggfunc = 'mean'
-    )
+    ).sort_index(ascending=False)
     set_plot_style(multiplier)
 
     fig, ax = plt.subplots(figsize=figsize)
@@ -52,6 +52,7 @@ def create_param_heatmap(data: pd.DataFrame,
                 cbar_kws={'label': metric},
                 fmt=fmt,
                 cmap=cmap,
+                annot_kws={'rotation': 0},
                 ax=ax)
 
     if title:
@@ -78,6 +79,26 @@ def create_v_iters_plot(v_arr: np.ndarray,
     plt.ylabel(y_label)
     if title:
         plt.title(title)
+    return fig, ax
+
+
+def modified_plot_policy(val_max,
+                         directions,
+                         title=None,
+                         figsize=(10, 8),
+                         multiplier=1):
+    """Plot the policy learned."""
+    set_plot_style(multiplier)
+    fig, ax = plt.subplots(figsize=figsize)
+    sns.heatmap(
+        val_max,
+        annot=directions,
+        fmt="",
+        cmap=sns.color_palette("magma_r", as_cmap=True),
+        linewidths=0.7,
+        linecolor="black",
+        annot_kws={"size": 12*multiplier},
+    ).set(title=title)
     return fig, ax
 
 

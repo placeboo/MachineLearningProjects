@@ -1,7 +1,10 @@
+import random
+
 import numpy as np
 from bettermdptools.algorithms.planner import Planner
 from bettermdptools.algorithms.rl import RL
 from bettermdptools.utils.test_env import TestEnv
+from src.utils.test_env import test_env
 from typing import Dict, Tuple, List
 from time import time
 import itertools
@@ -11,7 +14,8 @@ def run_value_iteration(env,
                         gamma: float=1.0,
                         theta: float=1e-10,
                         n_iters: int=1000,
-                        test_iters: int=200) -> Dict:
+                        test_iters: int=200,
+                        random_seed:int = 42) -> Dict:
     start_time = time()
     V, V_track, pi = Planner(env.P).value_iteration(
         gamma=gamma,
@@ -29,7 +33,7 @@ def run_value_iteration(env,
     delta_values = np.abs(np.diff(mean_values))
 
     # test policy
-    episode_rewards = TestEnv.test_env(env, n_iters=test_iters, pi=pi)
+    episode_rewards = test_env(env, n_iters=test_iters, pi=pi, seed=random_seed)
 
     return {
         'runtime': runtime,
@@ -39,6 +43,7 @@ def run_value_iteration(env,
         'std_reward': np.std(episode_rewards),
         'V': V,
         'V_track': V_track,
+        'pi': pi,
         'mean_values': mean_values,
         'max_values': max_values,
         'delta_values': delta_values,
@@ -51,7 +56,8 @@ def run_value_iteration(env,
 def vi_grid_search(env,
                    params: Dict={},
                    verbose=True,
-                   test_iters: int = 200) -> Tuple[Dict, float, List[Dict]]:
+                   test_iters: int = 200,
+                   random_seed: int = 42) -> Tuple[Dict, float, List[Dict]]:
     """
     Hyperparameter tunning for value iteration
     Args:
@@ -64,7 +70,7 @@ def vi_grid_search(env,
     """
     gamma = params.get('gamma', [1.0])
     theta = params.get('theta', [1e-10])
-    n_iters = params.get('n_iters', [1000])
+    n_iters = params.get('n_iters', [50])
 
     highest_avg_reward = -np.inf
     best_params = None
@@ -79,7 +85,7 @@ def vi_grid_search(env,
         if verbose:
             print(f"running VI with gamma: {i[0]}; n_iters: {i[1]}; theta: {i[2]}")
 
-        result_i = run_value_iteration(env, **param_i, test_iters=test_iters)
+        result_i = run_value_iteration(env, **param_i, test_iters=test_iters, random_seed=random_seed)
         iteration_results.append(result_i)
 
         if result_i['mean_reward'] > highest_avg_reward:
@@ -96,8 +102,11 @@ def run_policy_iteration(env,
                          gamma=1.0,
                          theta=1e-10,
                          n_iters=50,
-                         test_iters: int=200):
+                         test_iters: int=200,
+                         random_seed:int = 42) -> Dict:
     start_time = time()
+    np.random.seed(random_seed)
+    random.seed(random_seed)
     V, V_track, pi = Planner(env.P).policy_iteration(
         gamma=gamma,
         n_iters=n_iters,
@@ -114,7 +123,9 @@ def run_policy_iteration(env,
     delta_values = np.abs(np.diff(mean_values))
 
     # test policy
-    episode_rewards = TestEnv.test_env(env, n_iters=test_iters, pi=pi)
+    # env.reset(seed=random_seed)
+    # episode_rewards = TestEnv.test_env(env, n_iters=test_iters, pi=pi)
+    episode_rewards = test_env(env, n_iters=test_iters, pi=pi, seed=random_seed)
 
     return {
         'runtime': runtime,
@@ -124,6 +135,7 @@ def run_policy_iteration(env,
         'std_reward': np.std(episode_rewards),
         'V': V,
         'V_track': V_track,
+        'pi': pi,
         'mean_values': mean_values,
         'max_values': max_values,
         'delta_values': delta_values,
@@ -136,7 +148,8 @@ def run_policy_iteration(env,
 def pi_grid_search(env,
                    params: Dict={},
                    test_iters: int=200,
-                   verbose=True) -> Tuple[Dict, float, List[Dict]]:
+                   verbose=True,
+                   random_seed: int=42) -> Tuple[Dict, float, List[Dict]]:
     """
     Hyperparameter tunning for policy iteration
     Args:
@@ -164,7 +177,7 @@ def pi_grid_search(env,
         if verbose:
             print(f"running PI with gamma: {i[0]}; n_iters: {i[1]}; theta: {i[2]}")
 
-        result_i = run_policy_iteration(env, **param_i, test_iters=test_iters)
+        result_i = run_policy_iteration(env, **param_i, test_iters=test_iters, random_seed=random_seed)
         iteration_results.append(result_i)
 
         if result_i['mean_reward'] > highest_avg_reward:
@@ -186,8 +199,10 @@ def run_q_learning(env,
                    min_epsilon: float=0.1,
                    epsilon_decay_ratio: float=0.9,
                    n_episodes: int=10000,
-                   test_iters: int=200):
+                   test_iters: int=200,
+                   random_seed: int=42) -> Dict:
     start_time = time()
+    env.reset(seed=random_seed)
     Q, V, pi, Q_track, pi_track = RL(env).q_learning(
         gamma=gamma,
         init_alpha=init_alpha,
@@ -200,8 +215,15 @@ def run_q_learning(env,
     )
     runtime = time() - start_time
 
+    # calculate coverage metrics
+    mean_values = np.max(Q_track, axis=2)
+    mean_values = np.mean(mean_values, axis=1)
+    max_values = np.max(Q_track, axis=(1, 2))
+    delta_values = np.abs(np.diff(mean_values))
+
+
     # test policy
-    episode_rewards = TestEnv.test_env(env, n_iters=test_iters, pi=pi)
+    episode_rewards = test_env(env, n_iters=test_iters, pi=pi, seed=random_seed)
 
     return {
         'runtime': runtime,
@@ -210,9 +232,12 @@ def run_q_learning(env,
         'Q': Q,
         'V': V,
         'pi': pi,
-        'Q_track': Q_track,
-        'pi_track': pi_track,
-        'episode_rewards': episode_rewards,
+        #'Q_track': Q_track,
+        'mean_values': mean_values,
+        'max_values': max_values,
+        'delta_values': delta_values,
+        #'pi_track': pi_track,
+        #'episode_rewards': episode_rewards,
         'gamma': gamma,
         'init_alpha': init_alpha,
         'min_alpha': min_alpha,
@@ -226,7 +251,8 @@ def run_q_learning(env,
 def q_learning_grid_search(env,
                            params: Dict={},
                            verbose=True,
-                           test_iters: int=200) -> Tuple[Dict, float, List[Dict]]:
+                           test_iters: int=200,
+                           random_seed: int= 42) -> Tuple[Dict, float, List[Dict]]:
     """
     Hyperparameter tunning for q-learning
     Args:
@@ -269,7 +295,7 @@ def q_learning_grid_search(env,
         if verbose:
             print(f"running q-learning with gamma: {i[0]}; init_alpha: {i[1]}; min_alpha: {i[2]}; alpha_decay_ratio: {i[3]}; init_epsilon: {i[4]}; min_epsilon: {i[5]}; epsilon_decay_ratio: {i[6]}; n_episodes: {i[7]}")
 
-        result_i = run_q_learning(env, **param_i, test_iters=test_iters)
+        result_i = run_q_learning(env, **param_i, test_iters=test_iters, random_seed=random_seed)
         iteration_results.append(result_i)
 
         if result_i['mean_reward'] > highest_avg_reward:
