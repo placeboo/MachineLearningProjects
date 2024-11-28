@@ -1,0 +1,13 @@
+# figs
+figs/
+
+# doc
+*.docx
+*.txt
+
+
+# data
+*.pkl
+
+# vscode
+.vscode/
