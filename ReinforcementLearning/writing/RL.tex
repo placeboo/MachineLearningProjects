@@ -1,0 +1,474 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it .
+%Template version as of 6/27/2024
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{titlesec}
+\usepackage{stfloats}
+\usepackage{setspace}
+% \setstretch{0.95}  % Slightly reduce line spacing throughout the document
+
+% % Adjust section and subsection spacing
+% \titlespacing*{\section}{0pt}{0.3em}{0.3em}
+% \titlespacing*{\subsection}{0pt}{0.2em}{0.2em}
+% \titlespacing*{\subsubsection}{0pt}{0.2em}{0.2em}
+
+% \setlist[itemize]{nosep}
+% \setlength{\parskip}{0.3em} 
+% \setlength{\parindent}{0em}
+% % Reduce paragraph spacing
+% \setlist{nosep}
+% \setlength{\intextsep}{5pt plus 2pt minus 2pt}
+% \setlength{\textfloatsep}{10pt plus 5pt minus 5pt}
+% \setlength{\floatsep}{7pt plus 5pt minus 5pt}
+% % Adjust table settings
+% \setlength{\tabcolsep}{4pt}  % Reduce padding in table cells
+% \setlength{\belowcaptionskip}{-1pt}
+% \setlength{\textfloatsep}{0pt plus 2pt minus 2pt}
+% \setlength{\intextsep}{0pt plus 2pt minus 2pt}
+% Adjust caption settings
+\usepackage[font=small,labelfont=bf,labelsep=period]{caption}
+\captionsetup{justification=centering}
+
+% Allow page breaks in multi-line equations
+\allowdisplaybreaks
+
+% \usepackage{geometry}
+% \geometry{margin=0.75in}
+
+% % Optimize float placement
+% \renewcommand{\topfraction}{0.9}
+% \renewcommand{\bottomfraction}{0.8}
+% \renewcommand{\textfraction}{0.07}
+% \renewcommand{\floatpagefraction}{0.85}
+
+% % Reduce space around equations
+% \setlength{\abovedisplayskip}{3pt}
+% \setlength{\belowdisplayskip}{3pt}
+% \setlength{\abovedisplayshortskip}{0pt}
+% \setlength{\belowdisplayshortskip}{0pt}
+
+% % \usepackage[font=small]{caption}
+% \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+%     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+% figure size
+\newcommand{\subfigwidth}{0.32\textwidth}
+\newcommand{\vi}{\texttt{VI}}
+\newcommand{\p}{\texttt{PI}}
+\newcommand{\sarsa}{\texttt{SARSA}}
+\begin{document}
+\setlength{\itemsep}{0pt} % Reduce space between items
+\setlength{\parskip}{0pt}
+\title{Markov Decision Processes}
+\author{\IEEEauthorblockN{Jiaqi Yin (jyin90)}}
+\maketitle
+
+% \begin{IEEEkeywords}
+% Random Hill Climbing, Simulated Annealing, Genetic Algorithm, 
+% \end{IEEEkeywords}
+\section{Introduction}
+% Brief overview of MDPs and reinforcement learning
+% Introduction of chosen environments and justification
+% Statement of hypotheses
+Markov Decision Processes (MDPs) provide a mathematical framework for modeling decision-making processes that involve interactions between an environment and a decision-maker. An MDP is formally defined by a tuple $(S, A, P, R, \gamma)$, where $S$ represents the state space, $A$ the action space, $P$ the transition probabilities, $R$ the reward function, and $\gamma$ the discount factor. This project explores two distinct MDP environments from OpenAI Gym: Blackjack and CartPole. The investigation focuses on discrete state spaces to enable direct comparison of different algorithms: Value Iteration (VI), Policy Iteration (PI), Q-learning, and SARSA. The \texttt{bettermdptools} toolkit facilitates the implementation of these algorithms across both environments.
+
+\subsection{Blackjack}
+Blackjack, a widely popular card game, serves as my first MDP environment. The objective is to beat the dealer by obtaining a higher card value without exceeding 21. The environment features a binary action space (hit or stand) and 290 observation states, with rewards of +1 for winning, 0 for drawing, and -1 for losing. This environment proves particularly interesting due to its highly stochastic nature despite the finite deck of 52 cards. The probability distribution of the next card changes dynamically based on the current game state, creating a complex decision space. Furthermore, the known transition matrix makes it an ideal candidate for evaluating model-based methods like value iteration and policy iteration. I \textbf{hypothesize}
+\begin{itemize}
+    \item The model-based methods (Value Iteration and Policy Iteration) will converge faster than model-free methods (Q-learning and SARSA) due to their access to complete model information (transition probabilities and rewards).
+    \item PI will have fewer iterations to converge than VI since each PI iteration performs a complete policy evaluation.
+    \item The optimal policies derived from model-based methods will be more consistent than those from model-free methods, given the stochastic nature of the Blackjack environment.
+    \item SARSA will be more conservative than Q-learning, leading to Slightly lower average rewards. 
+    \item Higher discount factors ($\gamma> 0.9$) will be crucial for both VI and PI due to the delayed nature of rewards in blackjack
+    \item For Q-learning and SARSA, higher initial learning rates ($\alpha$) combined with gradual decay will perform better than constant low learning rates due to the need to quickly adapt to the stochastic environment
+    \item Higher exploration rates ($epsilon$) will be more important in this environment due to the large state space and need to explore different card scenarios
+\end{itemize} 
+
+\subsection{CartPole}
+The CartPole environment presents a classical control problem where a pole attached to a cart must be balanced upright through horizontal cart movements. While originally designed with continuous state variables (cart position, cart velocity, pole angle, and pole angular velocity), I discretize these states using \texttt{bettermdptools} to enable consistent comparison across all algorithms. This discretization process itself presents an interesting area of study, particularly in understanding how different state space granularities affect learning performance. The environment's immediate reward structure and state-dependent action requirements make it particularly suitable for model-free methods. I \textbf{hypothesize} that
+\begin{itemize}
+    \item Finer discretization (more bins) will lead to policies achieving higher average rewards, but will require more iterations to converge due to the larger state space. This is because finer discretization allows for more precise control actions at different pole angles and cart positions.
+    \item Model-free methods will demonstrate superior performance due to their ability to learn directly from experience.
+    \item Higher discount factors ($\gamma> 0.9$) will will prove crucial given the environment's failure state characteristics.
+    \item VI and PI will show similar final policy quality but different convergence patterns due to their different update mechanisms
+    \item Q-learning will achieve higher peak performance than SARSA but with more variance in learning.
+    \item The optimal initial learning rate will need to decrease as the number of discretization bins increases to maintain stability
+\end{itemize}
+
+
+\section{Methods}
+% Value Iteration and Policy Iteration explanation
+% Q-learning and SARSA explanation
+% Experimental Setup subsection
+
+% Environment details and parameters
+% Discretization strategies
+% Hyperparameter ranges
+% Convergence criteria
+% Performance metrics
+
+This study explores both model-based (VI, P), and model-free (Q-learning,  SARSA) reinforcement learning algorithms for solving MDPs. 
+
+Model-based algorithm (VI and PI) require complete knowledge of the environment's dynamics, specifically the transition probabilities $P(s'|s,a)$ and reward function $R(s,a)$. This information is provided through the environment's $P$ matrix in my implementations. These methods can perform systematic sweeps through the state space to compute optimal policies without actual environment interaction.
+
+Model-free approaches like Q-learning and SARSA take a different path - they learn by doing, accumulating wisdom through direct interaction with their environment. Rather than needing a pre-built map of actions and consequences, these algorithms discover the lay of the land through experimentation, much like an explorer charting unknown territory. While this hands-on learning style offers greater adaptability, it often requires more time to find optimal solutions. This trade-off becomes especially apparent in scenarios such as CartPole, where the smooth, continuous nature of states makes it difficult to create precise mathematical models of the system's behavior.
+
+\textbf{VI} iteratively updates state values by selecting actions that maximize future rewards. The algorithm uses the Bellman optimality equation to update each state's value:
+$$V(s) \leftarrow max_a [R(s,a) + \gamma \sum P(s'|s,a)V(s')]$$
+where $\gamma$ is the discount factor. 
+
+\textbf{PI} operates in two distinct phases: policy evaluation and policy improvement. During evaluation, it computes state values for the current policy until convergence, then improves the policy by selecting actions that maximize these values. While PI generally requires fewer iterations than VI, each iteration is more computationally intensive due to the complete policy evaluation step. My PI implementation shares the same parameter space as VI for $\gamma$ and $\theta$, enabling direct comparison of their convergence properties.
+
+\textbf{Q-learning} updates state-action values (Q-values) based on the maximum future Q-value, independent of the policy being followed. The update rule is:
+$$Q(s,a) \leftarrow Q(s,a) + \alpha[R + \gamma \max_{a'} Q(s',a') - Q(s,a)]$$
+where $\alpha$ is the learning rate. My implementation includes several key parameters: initial learning rate $\gamma$ (0.2 to 
+1.0), learning rate decay ratio, initial exploration rate $\epsilon$ (0.2 to 1.0), exploration decay ratio, and discount factor $\gamma$.
+
+\textbf{SARSA} differs from Q-learning by using the actual next action chosen by the policy rather than the maximum Q-value for updates:
+$$Q(s,a) \leftarrow Q(s,a) + \alpha [R + \gamma Q(s',a') - Q(s,a)]$$
+where $a'$ is the action actually taken in state $s'$. my implementation uses the same parameter ranges as Q-learning, allowing comparison between these on-policy versus off-policy approaches.
+
+\subsection{Experimental Setup}
+\subsubsection{Blackjack Environment}
+The experiments were configured as follows:
+\begin{itemize}
+    \item Natural discrete state space with 290 states
+    \item Two actions (hit or stand)
+    \item Value/Policy Iteration parameters:
+    \begin{itemize}
+        \item Discount factors $\gamma$: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99, 0.999, 1.0]
+        \item Convergence thresholds $\theta$: [0.1, 0.01, 0.001, 1e-6, 1e-8, 1e-10, 1e-12, 1e-14, 1e-16]
+    \end{itemize}
+    \item Q-learning/SARSA parameters:
+    \begin{itemize}
+        \item Discount factors $\gamma$: same as VI/PI
+        \item Initial learning rates $\alpha$: [0.2, 0.4, 0.6, 0.8, 1.0]
+        \item Initial exploration rates $\epsilon$: [0.2, 0.4, 0.6, 0.8, 1.0]
+        \item Number of episodes: 10000
+    \end{itemize} 
+    \item Testing iterations: 200 episodes for all methods
+\end{itemize}
+
+\subsubsection{CartPole Environment}
+The following configurations were used:
+\begin{itemize}
+    \item Discretized continuous state space. Position bins: [2, 5, 10, 20, 50]
+    \item Two actions (left or right)
+    \item Value/Policy Iteration parameters:
+    \begin{itemize}
+        \item Discount factors $\gamma$: [0.2, 0.4, 0.6, 0.8, 0.9, 0.99]
+        \item Convergence thresholds $\theta$: [0.1, 0.01, 0.001, 1e-6]
+        \item Number of iterations: 10000
+    \end{itemize}
+    \item Q-learning/SARSA parameters:
+    \begin{itemize}
+        \item Discount factors $\gamma$: same as VI/PI
+        \item Initial learning rates $\alpha$: [0.2, 0.4, 0.6, 0.8, 1.0]
+        \item Initial exploration rates $\epsilon$: [0.2, 0.4, 0.6, 0.8, 1.0]
+        \item Number of episodes: 10000
+    \end{itemize}
+    \item Testing iterations: 200 episodes for all methods
+\end{itemize}
+For both experiments, random seed fixed for reproducibility. The best parameters were selected based on the average reward over 200 episodes.
+
+Performance metrics tracked:
+\begin{itemize}
+    \item Convergence iteration counts
+    \item Mean and standard deviation of rewards
+    \item Runtime performance
+    \item Value function statistics (mean, max, delta values)
+\end{itemize}
+
+\section{Results and Discussion}
+
+% Separate analysis for each environment
+% Convergence analysis (iterations, time)
+% Policy quality comparison
+% State space size impact
+% Hypothesis validation
+\subsection{Blackjack}
+In this experiment, I have compared the performance of VI, PI, Q-learning, and SARSA in the Blackjack environment with various parameters. When compared VI with PI, VI takes more iteration to converge than PI when having the same discount factor and convergence threshold, seen in Fig \ref{fig:blackjack_converged_iter} and Fig. \ref{fig:blackjack_max_values_vi_pi}. This supports my hypothesis. The runtime of PI turns to higher than VI, as showed in Fig. 
+\ref{fig:blackjack_runtime}. PI has less iteration but longer runtime, which can be attributed to PI's requirement to solve a complete system of linear equations during each policy evaluation step, making individual iterations more computationally intensive despite requiring fewer total iterations.
+
+When studying the average reward for PI and VI, it surprises me because the average reward and reward standard deviation are the same when having the same discount factors with any convergence threshold. It also surprises me that the highest mean reward not comes from the higher discount factors, it reaches the highest reward when discount factor between 0.3 and 0.7 in Fig. \ref{fig:blackjack_avg_reward}. Blackjack has only 230 states. When one environment has the known transition matrix, the model-based methods will converge to the same policy and value function. The medium discount factors performing better can be explained by the short-term nature of Blackjack decisions - higher discount factors might overemphasize future rewards, leading to overly conservative play, while lower discount factors might make the agent too shortsighted. The optimal balance appears to be in the middle range, where the agent appropriately weighs both immediate and future consequences of its actions.
+
+When studying the discount factor ($\gamma$) and convergence threshold ($\theta$) impact on the PI and VI converge iterations and runtime, it shows that the higher discount factor and lower convergence rate have higher convergence iteration and runtime (in Fig. \ref{fig:blackjack_converged_iter} and \ref{fig:blackjack_runtime}). This occurs because higher discount factors extend the temporal horizon over which the algorithm must consider future rewards, requiring more iterations to propagate value changes through the state space. Similarly, lower convergence thresholds demand more precise value estimates, necessitating additional iterations to achieve the required accuracy.
+
+When compared model-free methods metric with VI/PI, both Q-learning and SARSA have higher runtime and rewards, seen in Fig \ref{fig:blackjack_model_free_runtime} and \ref{fig:blackjack_model_free_mean_reward}. It is interesting that the reward from model-free methods is higher than model-based methods when transition matrix is known. This unexpected result might be due to the exploration-based nature of model-free methods allowing them to discover profitable state-action pairs that model-based methods might undervalue due to the averaged nature of their probability transitions. It is also possible that the transition matrix provided by the toolkit \texttt{bettermdptools} is not entirely accurate, leading to suboptimal performance in model-based methods. When visualizing the optimal policy in Fig. \ref{fig:blackjack_policy}, it shows that the optimal policy derived from VI and PI is the same, while Q-learning and SARSA have different optimal policies than VI and PI. It supports the observations that model-based and model-free methods result in different reward outcomes.
+
+Both Q-learning and SARSA have converged within 10,000 episodes seen in Fig. \ref{fig:blackjack_max_values_q} and \ref{fig: blackjack_max_values_sarsa}, while Q-learning requires more episodes than SARSA. This difference arises because Q-learning's off-policy nature requires more exploration to learn optimal Q-values, while SARSA's on-policy learning more quickly converges to a stable policy.
+From Fig. \ref{fig:blackjack_model_free_runtime} and \ref{fig:blackjack_model_free_mean_reward}, when having the same initial learning rate, it takes more runtime and yields higher reward when having a higher initial exploration rate. This relationship emerges because higher exploration rates allow the agents to discover more diverse state-action pairs, leading to better policy optimization despite the increased computational cost. For both Q-learning and SARSA, higher learning rates combined with high exploration rates initially show faster learning but may lead to less stable policies, while lower learning rates with moderate exploration rates tend to produce more robust policies over time.
+
+The results support my hypothesis that SARSA is more conservative than Q-learning, leading to slightly lower average rewards. This behavior stems from SARSA's on-policy nature, where it learns the value of the actual policy being followed, including exploratory moves, rather than the optimal policy, making it more risk-averse in its final policy.
+
+In summary, this investigation reveals interesting tradeoffs between model-based and model-free approaches in the Blackjack environment. While model-based methods show faster convergence and consistent policies, model-free methods surprisingly achieved higher rewards through their exploration-based learning. The results also highlight the critical role of parameter selection, particularly the discount factor in model-based methods and the exploration-exploitation balance in model-free methods.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{../figs/blackjack_200/heatmap_vi_converged_iter.png}
+        \caption{VI iterations to convergence}
+        \label{fig:blackjack_vi_converged_iter}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{../figs/blackjack_200/heatmap_pi_converged_iter.png}
+        \caption{PI iterations to convergence}
+        \label{fig:blackjack_pi_converged_iter}
+    \end{subfigure}
+    \caption{Blackjack: Convergence iterations for VI and PI}
+    \label{fig:blackjack_converged_iter}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{../figs/blackjack_200/heatmap_vi_runtime.png}
+        \caption{VI runtime}
+        \label{fig:blackjack_vi_runtime}
+    \end{subfigure} 
+     \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{../figs/blackjack_200/heatmap_pi_runtime.png}
+        \caption{PI runtime}
+        \label{fig:blackjack_pi_runtime}
+     \end{subfigure}
+     \caption{Blackjack: Runtime performance for VI and PI}
+     \label{fig:blackjack_runtime}
+ \end{figure}
+ 
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{../figs/blackjack_200/heatmap_vi_mean_reward.png}
+        \caption{VI average reward}
+        \label{fig:blackjack_vi_avg_reward}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{../figs/blackjack_200/heatmap_pi_mean_reward.png}
+        \caption{PI average reward}
+        \label{fig:blackjack_pi_avg_reward}
+    \end{subfigure}
+    \caption{Blackjack: Average reward for VI and PI}
+    \label{fig:blackjack_avg_reward}
+\end{figure}
+
+\begin{figure*}[htbp]
+    \centering
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/blackjack_200/pi_vi_max_values.png}
+        \caption{Blackjack: Maximum value iteration comparison between VI and PI with $\gamma=0.3$ and $\theta$=0.1}
+        \label{fig:blackjack_max_values_vi_pi}    
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/blackjack_q_200_n10000/convergence_q_learning_max_values.png}
+        \caption{Blackjack: Maximum Q-value comparison changes over episodes for Q-learning with $\gamma=0.99$, $\alpha=0.4$, $\epsilon=0.6$}
+        \label{fig:blackjack_max_values_q}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/blackjack_sarsa_200_n10000/convergence_sarsa_learning_max_values.png}
+        \caption{Blackjack: Maximum Q-value comparison changes over episodes for SARSA with $\gamma=0.7$, $\alpha=0.8$, $\epsilon=0.4$}
+        \label{fig:blackjack_max_values_sarsa}
+    \end{subfigure}
+    \caption{Blackjack: Maximum value/Q-value comparison among VI, PI, Q-learning, and SARSA}
+    \label{fig:blackjack_max_values}
+\end{figure*}
+
+
+% Q-learning and SARSA heatmap for reward
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{../figs/blackjack_q_200_n10000/heatmap_q_learning_init_alpha_init_epsilon_mean_reward.png}
+        \caption{Q-learning average reward with respect to initial $\alpha$ and initial $\epsilon$ when setting $\gamma=0.99$}
+        \label{fig:q_learning_init_alpha_init_epsilon_runtime}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{../figs/blackjack_sarsa_200_n10000/heatmap_sarsa_learning_init_alpha_init_epsilon_mean_reward.png}
+        \caption{SARSA average reward with respect to initial $\alpha$ and initial $\epsilon$ when setting $\gamma=0.7$}
+        \label{fig:sarsa_init_alpha_init_epsilon_runtime}
+    \end{subfigure}
+    \caption{Blackjack: Average reward for Q-learning and SARSA with respect to initial $\alpha$ and $\epsilon$}
+    \label{fig:blackjack_model_free_mean_reward}
+\end{figure}
+
+% Q-learning and SARSA heatmap for runtime
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{../figs/blackjack_q_200_n10000/heatmap_q_learning_init_alpha_init_epsilon_runtime.png}
+        \caption{Q-learning runtime with respect to initial $\alpha$ and initial $\epsilon$ when setting $\gamma=0.99$}
+        \label{fig:q_learning_init_alpha_init_epsilon_reward}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.45\textwidth}
+        \includegraphics[width=\textwidth]{../figs/blackjack_sarsa_200_n10000/heatmap_sarsa_learning_init_alpha_init_epsilon_runtime.png}
+        \caption{SARSA runtime with respect to initial $\alpha$ and initial $\epsilon$ when setting $\gamma=0.7$}
+        \label{fig:sarsa_init_alpha_init_epsilon_reward}
+    \end{subfigure}
+    \caption{Blackjack: Runtime for Q-learning and SARSA with respect to initial $\alpha$ and $\epsilon$}
+    \label{fig:blackjack_model_free_runtime}
+\end{figure}
+
+
+\begin{figure*}[htbp]
+    \centering
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/blackjack_200/policy_vi.png}
+        \caption{Blackjack: Optimal policy derived from VI/PI with $\gamma=0.3$ and $\theta$=0.1}
+        \label{fig:blackjack_policy_vi_pi}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/blackjack_q_200_n10000/policy_q_learning.png}
+        \caption{Blackjack: Optimal policy derived from Q-learning with $\gamma=0.99$, $\alpha=0.4$, $\epsilon=0.6$}
+        \label{fig:blackjack_policy_q}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigwidth}
+        \includegraphics[width=\textwidth]{../figs/blackjack_sarsa_200_n10000/policy_sarsa_learning.png}
+        \caption{Blackjack: Optimal policy derived from SARSA with $\gamma=0.7$, $\alpha=0.8$, $\epsilon=0.4$}
+        \label{fig:blackjack_policy_sarsa}
+    \end{subfigure}
+    \caption{Blackjack: Optimal policy comparison among VI, PI, Q-learning, and SARSA}
+    \label{fig:blackjack_policy}
+\end{figure*}
+
+
+
+% \begin{table}[htbp]
+%     \centering
+%     \caption{Blackjack: Runtime and average reward comparison for VI, PI, Q-learning, and SARSA with best parameters}
+%     \label{tab:blackjack_results}
+%     \begin{tabular}{r|l|l|l}
+%     \hline
+%     \textbf{Algorithm} &  \textbf{Parameters} & \textbf{Runtime (s)} & \textbf{Avg. Reward} \\ 
+%     \hline
+%     VI & $\gamma$=0.3, $\theta$=0.1 &2.92e-3 & 0.065 \\
+%     PI & $\gamma$=0.3, $\theta$=0.1 &6.10e-3 & 0.065 \\
+%     Q-learning & $\gamma$=0.99, $\alpha$=0.4, $\epsilon$=0.6 & 0.753 & 0.225 \\
+%     SARSA & $\gamma$=0.7, $\alpha$=0.8, $\epsilon$=0.4 & 0.877 & 0.180 \\
+%     \hline
+%     \end{tabular}
+% \end{table}
+
+\subsection{CartPole}
+The CartPole experiments explored both algorithm performance comparisons and the impact of state space discretization. The environment's four continuous state variables (cart position, cart velocity, pole angle, and pole angular velocity) were discretized using \texttt{bettermdptools}. While maintaining 10 bins for velocity, pole angle, and angular velocity, we varied position bins (2, 5, 10, 20, 50), resulting in total state spaces of 4600, 11500, 23000, 46000, and 115000 states respectively. All algorithms were evaluated over 10000 iterations/episodes to balance computational constraints with learning requirements.
+
+Model-free methods (Q-learning and SARSA) exhibited significantly longer runtime compared to model-based methods (VI and PI) across all state space sizes. Runtime increased with discount factor, correlating positively with mean reward (Fig. \ref{fig:cartpole_gamma_runtime}). This relationship emerges from the deeper backup of future rewards with higher discount factors, requiring more computational effort but enabling better long-term decision making. The superior performance of model-free methods over VI/PI supports my hypothesis, likely due to their ability to learn actual environment dynamics rather than relying on approximate transition models.
+
+Contrary to my initial hypothesis, finer discretization did not consistently lead to higher rewards. Smaller state spaces (4600 and 11500 states) achieved maximum rewards ($\sim 500$) with $\gamma$ > 0.9, while larger state spaces showed incomplete convergence within the episode limit. Fig. \ref{fig:cartpole_max_values} demonstrates this through increasing maximum Q-values as episode increases, suggesting potential for improved performance with extended training. This reveals a fundamental tradeoff between state space granularity and learning efficiency - while finer discretization theoretically allows more precise control, it also increases the exploration burden on learning algorithms.
+
+For model-free methods, higher learning rates and exploration rates generally led to increased runtime and rewards (Fig. \ref{fig:cartpole_q_sarsa_mean_reward}-\ref{fig:cartpole_q_sarsa_mean_reward_epsilon}). This correlation strengthens with larger state spaces, as more aggressive learning and exploration become necessary to effectively cover the expanded state space. However, an interesting pattern emerged where larger state spaces required higher initial learning rates but lower exploration rates. This counterintuitive relationship suggests that with larger state spaces, focused learning in discovered valuable states becomes more critical than broad exploration.
+
+SARSA unexpectedly outperformed Q-learning in average rewards under identical parameters, contrary to my hypothesis. This might be attributed to SARSA's on-policy nature providing more stable learning in this continuous control task, where consistent behavior could be more valuable than the potentially aggressive optimization of Q-learning.
+
+A striking observation was the identical average reward (9.4) across all parameter combinations for VI/PI. This uniformity stems from the toolkit's simplified transition model, which assigns probability 1 to deterministic state transitions. While this highlights a limitation in my current implementation, it also emphasizes a crucial insight: in real-world control problems, accurate transition models are extremely difficult to specify without detailed physical modeling. This reinforces the practical advantage of model-free methods in such domains, where learning from experience can capture complex dynamics that might be difficult to model explicitly.
+
+The relationship between learning parameters and state space size revealed interesting patterns. For larger state spaces: Higher initial learning rates became necessary to make meaningful updates given limited episodes; Lower exploration rates proved more effective, suggesting the importance of exploiting discovered good behaviors; Discount factor impact became more pronounced, with higher values ($> 0.9$) consistently leading to better performance
+
+These results demonstrate the complex interplay between state space discretization, algorithm choice, and parameter selection in continuous control problems. While model-free methods showed superior performance, their effectiveness heavily depends on appropriate parameter tuning and sufficient training time, especially with larger state spaces. The findings highlight the practical challenges of applying model-based methods to continuous control problems and the importance of careful discretization choices in balancing representation precision with learning efficiency.
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[b]{0.45\textwidth}
+\includegraphics[width=\textwidth]{../figs/cartpole_gamma_mean_reward.png}
+\caption{CartPole: Average reward for VI, PI, Q-learning, and SARSA with respect to discount factor $\gamma$ and number of position bins}
+\label{fig:cartpole_gamma_mean_reward}
+\end{subfigure}
+\begin{subfigure}[b]{0.45\textwidth}
+\includegraphics[width=\textwidth]{../figs/cartpole_gamma_runtime.png}
+\caption{CartPole: Runtime for VI, PI, Q-learning, and SARSA with respect to discount factor $\gamma$ and number of position bins}
+\label{fig:cartpole_gamma_runtime}
+\end{subfigure}
+\caption{CartPole: Average reward and runtime performance}
+\label{fig:cartpole_performance}
+\end{figure}
+
+% Q and SARSA convergence plot
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.48\textwidth]{../figs/episode_max_values_results.png}
+\caption{CartPole: Maximum Q-value comparison changes over episodes for Q-learning and SARSA with $\gamma=0.99$, $\alpha=0.6$, $\epsilon=0.8$}
+\label{fig:cartpole_max_values}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[b]{0.45\textwidth}
+\includegraphics[width=\textwidth]{../figs/cartpole_q_n10000/heatmap_q_mean_reward_gamma_init_alpha_posi50_vel10_ang10.png}
+\caption{Q-learning average reward with respect to $\gamma$, initial $\alpha$ for 50 position bins}
+\label{fig:cartpole_q_mean_reward_gamma_alpha}
+\end{subfigure}
+\begin{subfigure}[b]{0.45\textwidth}
+\includegraphics[width=\textwidth]{../figs/cartpole_sarsa_n10000/heatmap_sarsa_mean_reward_gamma_init_alpha_posi50_vel10_ang10.png}
+\caption{SARSA average reward with respect to $\gamma$, initial $\alpha$ for 50 position bins}
+\label{fig:cartpole_sarsa_mean_reward_gamma_alpha}
+\end{subfigure}
+\caption{CartPole: Average reward for Q-learning and SARSA with respect to $\gamma$ and initial $\alpha$}
+\label{fig:cartpole_q_sarsa_mean_reward}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{../figs/cartpole_q_n10000/heatmap_q_runtime_gamma_init_alpha_posi50_vel10_ang10.png}
+    \caption{Q-learning runtime with respect to $\gamma$, initial $\alpha$ for 20 position bins}
+    \label{fig:cartpole_q_runtime_gamma_alpha}
+\end{subfigure}
+\begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{../figs/cartpole_sarsa_n10000/heatmap_sarsa_runtime_gamma_init_alpha_posi50_vel10_ang10.png}
+    \caption{SARSA runtime with respect to $\gamma$, initial $\alpha$ for 50 position bins}
+    \label{fig:cartpole_sarsa_runtime_gamma_alpha}
+\end{subfigure}
+\caption{CartPole: Runtime for Q-learning and SARSA with respect to $\gamma$ and initial $\alpha$}
+\label{fig:cartpole_q_sarsa_runtime}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{../figs/cartpole_q_n10000/heatmap_q_mean_reward_gamma_init_epsilon_posi50_vel10_ang10.png}
+    \caption{Q-learning average reward with respect to $\gamma$, initial $\epsilon$ for 50 position bins}
+    \label{fig:cartpole_q_mean_reward_gamma_epsilon}
+\end{subfigure}
+\begin{subfigure}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{../figs/cartpole_sarsa_n10000/heatmap_sarsa_mean_reward_gamma_init_epsilon_posi50_vel10_ang10.png}
+    \caption{SARSA average reward with respect to $\gamma$, initial $\epsilon$ for 50 position bins}
+    \label{fig:cartpole_sarsa_mean_reward_gamma_epsilon}
+\end{subfigure}
+\caption{CartPole: Average reward for Q-learning and SARSA with respect to $\gamma$ and initial $\epsilon$}
+\label{fig:cartpole_q_sarsa_mean_reward_epsilon}
+\end{figure}
+
+\section{Conclusion}
+% Summary of findings
+% Hypothesis outcomes
+% Future work suggestions
+This study's comprehensive investigation of MDPs through both model-based and model-free approaches across two distinct environments - Blackjack and CartPole - has yielded several significant insights, both supporting and challenging my initial hypotheses.
+
+In the Blackjack environment, my hypothesis about PI requiring fewer iterations than VI was confirmed, though interestingly, this came at the cost of higher computational runtime due to PI's intensive policy evaluation step. Contrary to my expectations about discount factors, optimal performance was achieved with moderate values ($\gamma= 0.3-0.7$) rather than higher ones ($\gamma > 0.9$), suggesting that in Blackjack, balancing immediate and future rewards is more crucial than long-term planning. Perhaps most surprisingly, model-free methods achieved higher rewards than model-based approaches despite the availability of transition probabilities, challenging my initial assumptions about the superiority of model-based methods in environments with known dynamics.
+
+The CartPole experiments revealed different patterns. While my hypothesis about model-free methods demonstrating superior performance was confirmed, my expectation about finer discretization leading to better performance was only partially supported. Smaller state spaces (4,600-11,500 states) achieved optimal performance more consistently than larger ones, highlighting the critical balance between representation precision and learning efficiency. SARSA's unexpected outperformance of Q-learning in this environment challenges conventional wisdom about off-policy methods' superiority in continuous control tasks.
+
+Several significant challenges emerged during this investigation. A primary concern was the potential inaccuracy of transition matrices provided by the \texttt{bettermdptools} library, particularly evident in the identical rewards observed across different parameter combinations in CartPole's model-based methods. This limitation underscores the broader challenge of accurately modeling transition dynamics in real-world applications. Additionally, the computational constraints with larger state spaces limited my ability to fully explore convergence properties with finer discretization levels.
+
+Given additional time, several promising avenues for future research emerge. A deeper investigation into dynamic discretization methods could optimize the state-space representation during learning. Implementing more sophisticated exploration strategies, particularly for larger state spaces, could improve learning efficiency. Additionally, examining the impact of different reward structures and incorporating function approximation methods could provide valuable insights for scaling these approaches to more complex environments.
+
+This study contributes to my understanding of the practical considerations in applying different RL algorithms to distinct problem domains, highlighting the importance of careful parameter selection and the sometimes counterintuitive relationship between model knowledge and performance. The findings underscore the need for empirical validation of theoretical assumptions and the value of comparing diverse approaches when tackling real-world reinforcement learning problems.
+
+% \begin{thebibliography}{00}
+%     \bibitem{b1} https://www.geeksforgeeks.org/what-is-markov-decision-process-mdp-and-its-relevance-to-reinforcement-learning/?t
+%     \bibitem{b2} \url{https://gymnasium.farama.org/environments/toy_text/blackjack/} % Blackjack environment details
+% \end{thebibliography}
+\end{document}    
+
+

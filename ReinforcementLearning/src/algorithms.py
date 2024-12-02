@@ -42,7 +42,7 @@ def run_value_iteration(env,
         'mean_reward': np.mean(episode_rewards),
         'std_reward': np.std(episode_rewards),
         'V': V,
-        'V_track': V_track,
+        #'V_track': V_track,
         'pi': pi,
         'mean_values': mean_values,
         'max_values': max_values,
@@ -134,7 +134,7 @@ def run_policy_iteration(env,
         'mean_reward': np.mean(episode_rewards),
         'std_reward': np.std(episode_rewards),
         'V': V,
-        'V_track': V_track,
+        #'V_track': V_track,
         'pi': pi,
         'mean_values': mean_values,
         'max_values': max_values,
@@ -296,6 +296,125 @@ def q_learning_grid_search(env,
             print(f"running q-learning with gamma: {i[0]}; init_alpha: {i[1]}; min_alpha: {i[2]}; alpha_decay_ratio: {i[3]}; init_epsilon: {i[4]}; min_epsilon: {i[5]}; epsilon_decay_ratio: {i[6]}; n_episodes: {i[7]}")
 
         result_i = run_q_learning(env, **param_i, test_iters=test_iters, random_seed=random_seed)
+        iteration_results.append(result_i)
+
+        if result_i['mean_reward'] > highest_avg_reward:
+            highest_avg_reward = result_i['mean_reward']
+            best_params = param_i
+
+        if verbose:
+            print("Average. episode reward: ", result_i['mean_reward'])
+            print('-' * 50)
+
+    return best_params, highest_avg_reward, iteration_results
+
+
+def run_sarsa_learning(env,
+                   gamma: float=0.99,
+                   init_alpha: float=0.5,
+                   min_alpha: float=0.01,
+                   alpha_decay_ratio: float=0.5,
+                   init_epsilon: float=1.0,
+                   min_epsilon: float=0.1,
+                   epsilon_decay_ratio: float=0.9,
+                   n_episodes: int=10000,
+                   test_iters: int=200,
+                   random_seed: int=42) -> Dict:
+    start_time = time()
+    env.reset(seed=random_seed)
+    Q, V, pi, Q_track, pi_track = RL(env).sarsa(
+        gamma=gamma,
+        init_alpha=init_alpha,
+        min_alpha=min_alpha,
+        alpha_decay_ratio=alpha_decay_ratio,
+        init_epsilon=init_epsilon,
+        min_epsilon=min_epsilon,
+        epsilon_decay_ratio=epsilon_decay_ratio,
+        n_episodes=n_episodes
+    )
+    runtime = time() - start_time
+
+    # calculate coverage metrics
+    mean_values = np.max(Q_track, axis=2)
+    mean_values = np.mean(mean_values, axis=1)
+    max_values = np.max(Q_track, axis=(1, 2))
+    delta_values = np.abs(np.diff(mean_values))
+
+
+    # test policy
+    episode_rewards = test_env(env, n_iters=test_iters, pi=pi, seed=random_seed)
+
+    return {
+        'runtime': runtime,
+        'mean_reward': np.mean(episode_rewards),
+        'std_reward': np.std(episode_rewards),
+        'Q': Q,
+        'V': V,
+        'pi': pi,
+        #'Q_track': Q_track,
+        'mean_values': mean_values,
+        'max_values': max_values,
+        'delta_values': delta_values,
+        #'pi_track': pi_track,
+        #'episode_rewards': episode_rewards,
+        'gamma': gamma,
+        'init_alpha': init_alpha,
+        'min_alpha': min_alpha,
+        'alpha_decay_ratio': alpha_decay_ratio,
+        'init_epsilon': init_epsilon,
+        'min_epsilon': min_epsilon,
+        'epsilon_decay_ratio': epsilon_decay_ratio,
+        'n_episodes': n_episodes
+    }
+
+def sarsa_learning_grid_search(env,
+                           params: Dict={},
+                           verbose=True,
+                           test_iters: int=200,
+                           random_seed: int= 42) -> Tuple[Dict, float, List[Dict]]:
+    """
+    Hyperparameter tunning for sarsa-learning
+    Args:
+        env:
+        params: {'gamma': np.ndarray,
+                'init_alpha': np.ndarray,
+                'min_alpha': np.ndarray,
+                'alpha_decay_ratio': np.ndarray,
+                'init_epsilon': np.ndarray,
+                'min_epsilon': np.ndarray,
+                'epsilon_decay_ratio': np.ndarray,
+                'n_episodes': np.ndarray}
+    Returns:
+        best params, highest_avg_reward, the return from run_value_iterations for every combination
+    """
+    gamma = params.get('gamma', [0.99])
+    init_alpha = params.get('init_alpha', [0.5])
+    min_alpha = params.get('min_alpha', [0.01])
+    alpha_decay_ratio = params.get('alpha_decay_ratio', [0.5])
+    init_epsilon = params.get('init_epsilon', [1.0])
+    min_epsilon = params.get('min_epsilon', [0.1])
+    epsilon_decay_ratio = params.get('epsilon_decay_ratio', [0.9])
+    n_episodes = params.get('n_episodes', [10000])
+
+    highest_avg_reward = -np.inf
+    best_params = None
+    iteration_results = []
+
+    for i in itertools.product(gamma, init_alpha, min_alpha, alpha_decay_ratio, init_epsilon, min_epsilon, epsilon_decay_ratio, n_episodes):
+        param_i = {
+            'gamma': i[0],
+            'init_alpha': i[1],
+            'min_alpha': i[2],
+            'alpha_decay_ratio': i[3],
+            'init_epsilon': i[4],
+            'min_epsilon': i[5],
+            'epsilon_decay_ratio': i[6],
+            'n_episodes': i[7]
+        }
+        if verbose:
+            print(f"running sarsa-learning with gamma: {i[0]}; init_alpha: {i[1]}; min_alpha: {i[2]}; alpha_decay_ratio: {i[3]}; init_epsilon: {i[4]}; min_epsilon: {i[5]}; epsilon_decay_ratio: {i[6]}; n_episodes: {i[7]}")
+
+        result_i = run_sarsa_learning(env, **param_i, test_iters=test_iters, random_seed=random_seed)
         iteration_results.append(result_i)
 
         if result_i['mean_reward'] > highest_avg_reward:
