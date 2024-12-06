@@ -95,10 +95,6 @@ def read_file_safely(file_path):
 def combine_markdown_files(input_dir, output_file):
     """
     Combines multiple markdown files into a single PDF while preserving formatting.
-
-    Args:
-        input_dir (str): Directory containing markdown files
-        output_file (str): Path to the output PDF file
     """
     try:
         # Check if pandoc is installed
@@ -119,19 +115,48 @@ def combine_markdown_files(input_dir, output_file):
 
     # Create a temporary file to store combined markdown
     with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False, encoding='utf-8') as temp_file:
-        # Add YAML metadata for better PDF formatting
+        # Add YAML metadata with enhanced formatting
         temp_file.write("""---
 title: "Machine Learning Notes"
 date: \\today
 author: "Jackie Yin"
 geometry: margin=1in
-fontsize: 11pt
+fontsize: 12pt
 header-includes: |
     \\usepackage{fancyhdr}
     \\pagestyle{fancy}
     \\usepackage{indentfirst}
     \\usepackage{amsmath}
     \\usepackage{amssymb}
+    \\usepackage{listings}
+    \\usepackage{enumitem}
+    \\usepackage{tcolorbox}
+    \\usepackage{fancyvrb}
+    \\usepackage{xcolor}
+    \\usepackage{etoolbox}
+
+    \\definecolor{light-gray}{gray}{0.95}
+    \\lstset{
+        basicstyle=\\ttfamily\\small,
+        breaklines=true,
+        frame=single,
+        backgroundcolor=\\color{light-gray},
+        tabsize=2,
+        showstringspaces=false,
+        breakindent=0pt,
+        keepspaces=true
+    }
+
+    \\setlistdepth{9}
+    \\setlist[itemize,1]{label=$\\bullet$}
+    \\setlist[itemize,2]{label=$\\circ$}
+    \\setlist[itemize,3]{label=$\\diamond$}
+    \\setlist{nosep}
+    \\setlist[itemize]{leftmargin=*}
+    \\setlist[enumerate]{leftmargin=*}
+
+    \\BeforeBeginEnvironment{verbatim}{\\begin{tcolorbox}[colback=light-gray]}
+    \\AfterEndEnvironment{verbatim}{\\end{tcolorbox}}
 ---
 
 """)
@@ -165,8 +190,7 @@ header-includes: |
                 print(f"Error processing file {md_file}: {str(e)}")
                 continue
 
-    # Convert to PDF using pandoc
-    print("Converting to PDF...")
+    # Update pandoc command with specific markdown extensions
     try:
         subprocess.run([
             'pandoc',
@@ -174,18 +198,25 @@ header-includes: |
             '-o', output_file,
             '--pdf-engine=xelatex',
             '--highlight-style=tango',
-            '--toc',  # Add table of contents
-            '--number-sections',  # Add section numbers
-            '-V', 'colorlinks=true',  # Color links instead of boxes
+            '--toc',
+            '--number-sections',
+            '-V', 'colorlinks=true',
             '-V', 'linkcolor=blue',
             '-V', 'urlcolor=blue',
-            '--standalone'
+            '--standalone',
+            '--from', 'markdown+raw_tex+tex_math_dollars+tex_math_single_backslash+lists_without_preceding_blankline',
+            '--wrap=preserve',
+            '--columns=72',
+            '--variable=verbatim-in-note',
+            '--top-level-division=chapter'
         ], check=True)
         print(f"Successfully created PDF: {output_file}")
     except subprocess.CalledProcessError as e:
         print(f"Error converting to PDF: {e}")
+        # Print the detailed error message if available
+        if e.stderr:
+            print(f"Error details: {e.stderr.decode()}")
     finally:
-        # Clean up temporary file
         os.unlink(temp_file.name)
 
 
