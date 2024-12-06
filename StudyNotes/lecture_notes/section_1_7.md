@@ -28,8 +28,8 @@ TITLE: Bayesian Learning
    
    B. **Algorithms and Methods**
       - **MAP Estimation**: 
-        - **Algorithm**: For each hypothesis \( h \), calculate \( P(D|h) \cdot P(h) \) and choose \( \arg\max \).
-        - **Complexity**: Typically \( O(|H| \cdot T) \), where \( |H| \) is the size of the hypothesis space and \( T \) is the time to evaluate each term.
+        - **Algorithm**: For each hypothesis $h$, calculate $P(D|h) \cdot P(h)$ and choose $\arg\max$.
+        - **Complexity**: Typically $O(|H| \cdot T)$, where $|H| $ is the size of the hypothesis space and $T$ is the time to evaluate each term.
       - **Bayesian Classification**: 
         - **Algorithm**: Calculate the weighted vote of hypotheses for each class label.
         - **Complexity**: Similar to MAP, but requires summing probabilities over all hypotheses.
