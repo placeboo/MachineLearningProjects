@@ -1,4 +1,4 @@
-TITLE: **Ensemble Learning: Boosting**
+TITLE: Ensemble Learning: Boosting
 
 ---
 

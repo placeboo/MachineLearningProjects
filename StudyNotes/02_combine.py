@@ -92,105 +92,141 @@ def read_file_safely(file_path):
     raise RuntimeError(f"Could not read file {file_path} with any of the attempted encodings: {encodings}")
 
 
+def update_yaml_header():
+    """
+    Return an enhanced YAML header with LaTeX settings for code blocks with math.
+    """
+    return """---
+title: "Machine Learning Notes"
+author: "Jackie Yin"
+date: \\today
+documentclass: report
+geometry: "margin=1in"
+fontsize: 12pt
+header-includes:
+    - \\usepackage{fancyhdr}
+    - \\pagestyle{fancy}
+    - \\usepackage{amsmath}
+    - \\usepackage{amssymb}
+    - \\usepackage{enumitem}
+    - \\usepackage{xcolor}
+    - \\usepackage{mdframed}
+    - |
+      \\definecolor{light-gray}{gray}{0.95}
+    - |
+      \\newenvironment{algorithmbox}
+        {\\begin{mdframed}[backgroundcolor=light-gray,hidealllines=true]\\begin{flushleft}}
+        {\\end{flushleft}\\end{mdframed}}
+---
+
+"""
+
+
+def clean_and_format_markdown(content):
+    """
+    Clean and format markdown content with special handling for code blocks containing math.
+    """
+    lines = content.split('\n')
+    formatted_lines = []
+    in_list = False
+    list_indent = 0
+    in_code_block = False
+
+    i = 0
+    while i < len(lines):
+        line = lines[i].rstrip()
+
+        # Check if we're in a list item
+        if line.lstrip().startswith(('- ', '* ', '+ ', '1. ')):
+            in_list = True
+            list_indent = len(line) - len(line.lstrip())
+            formatted_lines.append(line)
+
+            # Look ahead for code block
+            if i + 1 < len(lines) and '```' in lines[i + 1]:
+                # Check if next lines contain math symbols
+                has_math = False
+                temp_i = i + 2
+                while temp_i < len(lines) and '```' not in lines[temp_i]:
+                    if '$' in lines[temp_i]:
+                        has_math = True
+                        break
+                    temp_i += 1
+
+                if has_math:
+                    # Handle code block with math using custom environment
+                    formatted_lines.append(' ' * (list_indent + 2) + '\\begin{algorithmbox}')
+                    i += 2  # Skip the ``` line
+
+                    while i < len(lines) and '```' not in lines[i]:
+                        if lines[i].strip():
+                            # Keep the math expressions intact
+                            formatted_lines.append(' ' * (list_indent + 4) + lines[i].strip() + ' \\\\')
+                        i += 1
+
+                    formatted_lines.append(' ' * (list_indent + 2) + '\\end{algorithmbox}')
+                    formatted_lines.append('')
+                else:
+                    # Handle regular code block
+                    formatted_lines.append('```')
+                    i += 1
+                    while i < len(lines) and '```' not in lines[i]:
+                        if lines[i].strip():
+                            formatted_lines.append(lines[i])
+                        i += 1
+                    formatted_lines.append('```')
+
+        else:
+            formatted_lines.append(line)
+            if not line.strip():
+                in_list = False
+        i += 1
+
+    return '\n'.join(formatted_lines)
+
+
 def combine_markdown_files(input_dir, output_file):
     """
-    Combines multiple markdown files into a single PDF while preserving formatting.
+    Enhanced version of combine_markdown_files function with proper error handling
     """
     try:
-        # Check if pandoc is installed
         subprocess.run(['pandoc', '--version'], check=True, capture_output=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         print("Error: pandoc is not installed. Please install pandoc first.")
         return
 
-    # Get all markdown files and sort them
-    md_files = []
-    for file in sorted(os.listdir(input_dir)):
-        if file.endswith('.md'):
-            md_files.append(os.path.join(input_dir, file))
+    md_files = sorted([f for f in os.listdir(input_dir) if f.endswith('.md')])
 
     if not md_files:
         print(f"No markdown files found in {input_dir}")
         return
 
-    # Create a temporary file to store combined markdown
     with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False, encoding='utf-8') as temp_file:
-        # Add YAML metadata with enhanced formatting
-        temp_file.write("""---
-title: "Machine Learning Notes"
-date: \\today
-author: "Jackie Yin"
-geometry: margin=1in
-fontsize: 12pt
-header-includes: |
-    \\usepackage{fancyhdr}
-    \\pagestyle{fancy}
-    \\usepackage{indentfirst}
-    \\usepackage{amsmath}
-    \\usepackage{amssymb}
-    \\usepackage{listings}
-    \\usepackage{enumitem}
-    \\usepackage{tcolorbox}
-    \\usepackage{fancyvrb}
-    \\usepackage{xcolor}
-    \\usepackage{etoolbox}
-
-    \\definecolor{light-gray}{gray}{0.95}
-    \\lstset{
-        basicstyle=\\ttfamily\\small,
-        breaklines=true,
-        frame=single,
-        backgroundcolor=\\color{light-gray},
-        tabsize=2,
-        showstringspaces=false,
-        breakindent=0pt,
-        keepspaces=true
-    }
-
-    \\setlistdepth{9}
-    \\setlist[itemize,1]{label=$\\bullet$}
-    \\setlist[itemize,2]{label=$\\circ$}
-    \\setlist[itemize,3]{label=$\\diamond$}
-    \\setlist{nosep}
-    \\setlist[itemize]{leftmargin=*}
-    \\setlist[enumerate]{leftmargin=*}
-
-    \\BeforeBeginEnvironment{verbatim}{\\begin{tcolorbox}[colback=light-gray]}
-    \\AfterEndEnvironment{verbatim}{\\end{tcolorbox}}
----
-
-""")
+        # Write enhanced YAML header
+        temp_file.write(update_yaml_header())
 
         # Process each markdown file
         for i, md_file in enumerate(md_files, 1):
             print(f"Processing {md_file}...")
 
-            # Add a page break before each new section (except the first one)
-            if i > 1:
-                temp_file.write("\n\\newpage\n\n")
-
             try:
-                # Read content and extract title
-                content = read_file_safely(md_file)
+                content = read_file_safely(os.path.join(input_dir, md_file))
                 title = extract_title(content)
 
                 if title:
-                    # Write chapter title
-                    temp_file.write(f"# {title}\n\n")
-                    # Clean content by removing original title line
+                    temp_file.write(f"\\chapter{{{title}}}\n\n")
                     content = clean_content(content)
-                else:
-                    print(f"Warning: No title found in {md_file}")
 
-                # Write remaining content
-                temp_file.write(content)
+                # Clean and format the content
+                formatted_content = clean_and_format_markdown(content)
+                temp_file.write(formatted_content)
                 temp_file.write("\n\n")
 
             except Exception as e:
                 print(f"Error processing file {md_file}: {str(e)}")
                 continue
 
-    # Update pandoc command with specific markdown extensions
+    # Update pandoc command with enhanced options
     try:
         subprocess.run([
             'pandoc',
@@ -204,21 +240,16 @@ header-includes: |
             '-V', 'linkcolor=blue',
             '-V', 'urlcolor=blue',
             '--standalone',
-            '--from', 'markdown+raw_tex+tex_math_dollars+tex_math_single_backslash+lists_without_preceding_blankline',
-            '--wrap=preserve',
-            '--columns=72',
-            '--variable=verbatim-in-note',
-            '--top-level-division=chapter'
-        ], check=True)
+            '--from',
+            'markdown+raw_tex+tex_math_dollars+tex_math_single_backslash+lists_without_preceding_blankline+fenced_code_blocks+fenced_code_attributes',
+            '--wrap=preserve'
+        ], check=True, capture_output=True, text=True)
         print(f"Successfully created PDF: {output_file}")
     except subprocess.CalledProcessError as e:
         print(f"Error converting to PDF: {e}")
-        # Print the detailed error message if available
-        if e.stderr:
-            print(f"Error details: {e.stderr.decode()}")
+        print(f"Pandoc stderr output: {e.stderr}")
     finally:
         os.unlink(temp_file.name)
-
 
 def main():
     # Configure input and output paths
