@@ -225,9 +225,23 @@ def combine_markdown_files(input_dir, output_file):
             except Exception as e:
                 print(f"Error processing file {md_file}: {str(e)}")
                 continue
-
+    # Generate LaTeX file path
+    latex_file = output_file.rsplit('.', 1)[0] + '.tex'
     # Update pandoc command with enhanced options
     try:
+        # first generate laex file
+        subprocess.run([
+            'pandoc',
+            temp_file.name,
+            '-o', latex_file,
+            '--standalone',
+            '--from',
+            'markdown+raw_tex+tex_math_dollars+tex_math_single_backslash+lists_without_preceding_blankline+fenced_code_blocks+fenced_code_attributes',
+            '--wrap=preserve'
+        ], check=True, capture_output=True, text=True)
+        print(f"Successfully created LaTeX file: {latex_file}")
+
+        # generate pdf file
         subprocess.run([
             'pandoc',
             temp_file.name,
