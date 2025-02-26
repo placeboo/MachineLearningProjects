@@ -102,7 +102,3 @@ The Jupyter notebooks in the `playground` folder provide interactive visualizati
 
 ## Author
 Jackie Jiaqi Yin
-
-## Acknowledgments
-
-This project was completed as part of the CS7641 Machine Learning course at Georgia Tech.

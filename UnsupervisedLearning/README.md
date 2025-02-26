@@ -130,7 +130,3 @@ Results are saved in the `results` directory, and visualizations are stored in t
 
 ## Author
 Jackie Jiaqi Yin
-
-## Acknowledgments
-
-This project was completed as part of the CS7641 Machine Learning course at Georgia Tech.
